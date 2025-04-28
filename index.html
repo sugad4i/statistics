@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>IndexedDB 超かんたんデモ</title>
+<style>
+ body{font-family:monospace;padding:20px}
+ input{margin-right:6px}
+ #list{margin-top:12px;border:1px solid #888;padding:8px;white-space:pre}
+</style>
+</head>
+<body>
+
+<h2>メモを保存</h2>
+<input id="memo" placeholder="好きな文字を入力">
+<button id="save">保存</button>
+<button id="load">読み込み</button>
+
+<div id="list"></div>
+
+<script type="module">
+import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@7/+esm'
+
+const db = await openDB('demoDB',1,{
+  upgrade(db){
+    // 主キー自動連番
+    db.createObjectStore('memos',{autoIncrement:true})
+  }
+})
+
+const $ = sel => document.querySelector(sel)
+
+$('#save').onclick = async ()=>{
+  const text = $('#memo').value.trim()
+  if(!text) return
+  await db.add('memos',{txt:text,time:new Date().toISOString()})
+  $('#memo').value = ''
+}
+
+$('#load').onclick = async ()=>{
+  const all = await db.getAll('memos')
+  $('#list').textContent = all
+    .map(o=>`${o.time.slice(0,19)}  ${o.txt}`)
+    .join('\n') || '(まだ何もない)'
+}
+</script>
+</body>
+</html>
