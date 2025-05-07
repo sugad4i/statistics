@@ -1,48 +1,181 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<title>IndexedDB 超かんたんデモ</title>
-<style>
- body{font-family:monospace;padding:20px}
- input{margin-right:6px}
- #list{margin-top:12px;border:1px solid #888;padding:8px;white-space:pre}
-</style>
+  <meta charset="UTF-8">
+  <title>エントランス集計ツール ver1.3.0</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="apple-touch-icon" href="A_digital_2D_graphic_design_features_bold,_capital.png">
+  <style>
+    body { font-family: 'Noto Sans JP', sans-serif; margin: 0; background-color: #fafafa; }
+    header { background: #eee; padding: 10px 20px; font-size: 20px; font-weight: bold; text-align: center; }
+    .page-title { display: flex; justify-content: space-between; align-items: center; margin: 20px; }
+    .title-left { font-size: 20px; font-weight: bold; }
+    .title-right { font-size: 12px; color: #666; }
+    .date-container { text-align: center; margin-bottom: 10px; }
+    .date-container input { font-size: 16px; padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc; }
+    .table-header { display: flex; justify-content: flex-end; align-items: center; margin: 0 20px 10px; }
+    .table-header button, button { background-color: #007bff; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 14px; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    table { width: 95%; border-collapse: collapse; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background-color: white; border-radius: 8px; overflow: hidden; }
+    thead { background-color: #f2f2f2; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    input[type='number'] { width: 60px; text-align: center; font-size: 16px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; }
+    .fixed { background-color: #e9f5ff; }
+    #output-area { margin: 30px 20px 0; text-align: center; }
+    #output { margin-top: 10px; padding: 10px; border: 1px solid #ccc; min-height: 80px; white-space: pre-wrap; background: #f9f9f9; font-family: monospace; font-size: 16px; border-radius: 6px; text-align: left; }
+    main { padding-bottom: 40px; }
+  </style>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDSZohtnPXem6m7f6A63KjXTQMUUFNk0Cg",
+      authDomain: "ghost-entrance.firebaseapp.com",
+      databaseURL: "https://ghost-entrance-default-rtdb.firebaseio.com",
+      projectId: "ghost-entrance",
+      storageBucket: "ghost-entrance.firebasestorage.app",
+      messagingSenderId: "977704976997",
+      appId: "1:977704976997:web:e61ef8bdc61babc2757c8c"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
 </head>
 <body>
 
-<h2>メモを保存</h2>
-<input id="memo" placeholder="好きな文字を入力">
-<button id="save">保存</button>
-<button id="load">読み込み</button>
+<header>エントランス集計ツール ver1.3.0</header>
 
-<div id="list"></div>
+<main>
+  <div class="page-title">
+    <div class="title-left">エントランス滞在率計算 ver1.3.0</div>
+    <div class="title-right">更新 2025/5/7</div>
+  </div>
 
-<script type="module">
-import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@7/+esm'
+  <div class="date-container">
+    日付：<input type="date" id="date-input">
+  </div>
 
-const db = await openDB('demoDB',1,{
-  upgrade(db){
-    // 主キー自動連番
-    db.createObjectStore('memos',{autoIncrement:true})
+  <div class="table-header">
+    <button onclick="resetData()">リセット</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>時間帯</th><th>IN</th><th>OUT</th><th>IN合計</th><th>OUT合計</th><th>滞在数</th><th>滞在率</th><th>出力</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+
+  <div id="output-area">
+    <button onclick="copyOutput()">コピー</button>
+    <div id="output"></div>
+  </div>
+</main>
+
+<script>
+const timeSlots = ["22:00-23:00", "23:00-24:00", "24:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-4:30"];
+let data = JSON.parse(localStorage.getItem('entranceData')) || timeSlots.map(() => ({in: '', out: ''}));
+const tbody = document.getElementById('table-body');
+const outputDiv = document.getElementById('output');
+const dateInput = document.getElementById('date-input');
+
+function setDefaultDate() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  dateInput.value = `${yyyy}-${mm}-${dd}`;
+}
+
+function renderTable() {
+  tbody.innerHTML = '';
+  let inTotal = 0, outTotal = 0;
+
+  timeSlots.forEach((slot, i) => {
+    const row = document.createElement('tr');
+    const tdTime = document.createElement('td'); tdTime.textContent = slot; row.appendChild(tdTime);
+
+    const tdIn = document.createElement('td');
+    const inputIn = document.createElement('input'); inputIn.type = 'number'; inputIn.value = data[i].in;
+    inputIn.onchange = () => { data[i].in = Number(inputIn.value); saveData(); renderTable(); };
+    tdIn.appendChild(inputIn); row.appendChild(tdIn);
+
+    const tdOut = document.createElement('td');
+    const inputOut = document.createElement('input'); inputOut.type = 'number'; inputOut.value = data[i].out;
+    inputOut.onchange = () => { data[i].out = Number(inputOut.value); saveData(); renderTable(); };
+    tdOut.appendChild(inputOut); row.appendChild(tdOut);
+
+    inTotal += Number(data[i].in) || 0;
+    outTotal += Number(data[i].out) || 0;
+    const stay = inTotal - outTotal;
+    const stayRate = inTotal > 0 ? Math.round((stay / inTotal) * 100) : 0;
+
+    const tdInSum = document.createElement('td'); tdInSum.textContent = inTotal; tdInSum.classList.add('fixed'); row.appendChild(tdInSum);
+    const tdOutSum = document.createElement('td'); tdOutSum.textContent = outTotal; tdOutSum.classList.add('fixed'); row.appendChild(tdOutSum);
+    const tdStay = document.createElement('td'); tdStay.textContent = stay; tdStay.classList.add('fixed'); row.appendChild(tdStay);
+    const tdStayRate = document.createElement('td'); tdStayRate.textContent = stayRate + '%'; tdStayRate.classList.add('fixed'); row.appendChild(tdStayRate);
+
+    const tdButton = document.createElement('td');
+    const button = document.createElement('button'); button.textContent = '出力';
+    button.onclick = () => {
+      const inSingle = String(data[i].in || 0).padStart(2, ' ');
+      const outSingle = String(data[i].out || 0).padStart(2, ' ');
+      const inTotalStr = String(inTotal).padStart(3, ' ');
+      const outTotalStr = String(outTotal).padStart(3, ' ');
+      const formattedDate = dateInput.value.replace(/-/g, '/');
+      const text = `${formattedDate}\n${slot}\nin  ${inSingle}人 計${inTotalStr}人\nout ${outSingle}人 計${outTotalStr}人\n滞在率${stayRate}%`;
+      outputDiv.textContent = text;
+      copyText(text);
+
+      // その時間までのデータをクラウド保存
+      const today = dateInput.value;
+      const partialData = data.slice(0, i + 1).map(d => ({ in: d.in, out: d.out }));
+      db.ref('entrance/' + today + '/partial_' + i).set(partialData)
+        .then(() => console.log('クラウドに部分データを保存しました'))
+        .catch(e => console.error('部分保存失敗: ' + e));
+      // その日全体も保存
+      db.ref('entrance/' + today).set(data)
+        .then(() => console.log('クラウドに全体データも保存しました'))
+        .catch(e => console.error('全体保存失敗: ' + e));
+    };
+    tdButton.appendChild(button); row.appendChild(tdButton);
+    tbody.appendChild(row);
+  });
+}
+
+function copyOutput() {
+  const text = outputDiv.textContent;
+  if (!text) return;
+  copyText(text);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text)
+    .then(() => alert('コピーしました！'))
+    .catch(err => alert('コピー失敗：' + err));
+}
+
+function saveData() {
+  localStorage.setItem('entranceData', JSON.stringify(data));
+}
+
+function resetData() {
+  if (confirm('新しい日時のデータを入力しますか？')) {
+    localStorage.removeItem('entranceData');
+    data = timeSlots.map(() => ({in: '', out: ''}));
+    setDefaultDate();
+    renderTable();
+    outputDiv.textContent = '';
+    alert('データをリセットしました！');
   }
-})
-
-const $ = sel => document.querySelector(sel)
-
-$('#save').onclick = async ()=>{
-  const text = $('#memo').value.trim()
-  if(!text) return
-  await db.add('memos',{txt:text,time:new Date().toISOString()})
-  $('#memo').value = ''
 }
 
-$('#load').onclick = async ()=>{
-  const all = await db.getAll('memos')
-  $('#list').textContent = all
-    .map(o=>`${o.time.slice(0,19)}  ${o.txt}`)
-    .join('\n') || '(まだ何もない)'
-}
+setDefaultDate();
+renderTable();
 </script>
+
 </body>
 </html>
