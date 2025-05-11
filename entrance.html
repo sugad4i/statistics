@@ -72,6 +72,29 @@
   <div id="dayTableArea" class="stats-area"></div>
 </div>
 
+<!-- ⑤ データ修正用入力フォーム -->
+<div class="graph-area">
+  <h3>データ修正・追加フォーム</h3>
+  <div class="graph-controls">
+    <label>日付: <input type="date" id="edit-date"></label>
+    <button onclick="loadEditTable()">読み込み</button>
+  </div>
+  <form id="editForm" onsubmit="saveEditTable(); return false;">
+    <table border="1" style="margin:auto;border-collapse:collapse;">
+      <tr>
+        <th>時間帯</th>
+        <th>IN</th>
+        <th>OUT</th>
+      </tr>
+      <tbody id="editTableBody">
+        <!-- JSで行を生成 -->
+      </tbody>
+    </table>
+    <button type="submit" style="margin-top:10px;">保存</button>
+    <span id="editMsg" style="margin-left:10px;color:green;"></span>
+  </form>
+</div>
+
 <script>
 const timeSlots = ["22:00-23:00", "23:00-24:00", "24:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-4:30"];
 
@@ -222,6 +245,46 @@ function showDayTable() {
     }
     html += '</table>';
     document.getElementById('dayTableArea').innerHTML = html;
+  });
+}
+
+// ⑤ データ修正用入力フォーム
+function loadEditTable() {
+  const date = document.getElementById('edit-date').value;
+  if (!date) return;
+  db.ref('entrance/' + date).get().then(snapshot => {
+    let arr = snapshot.exists() ? snapshot.val() : [];
+    let html = '';
+    for (let i = 0; i < timeSlots.length; i++) {
+      html += `<tr>
+        <td>${timeSlots[i]}</td>
+        <td><input type="number" name="in${i}" value="${arr[i]?.in ?? ''}" min="0" style="width:60px;"></td>
+        <td><input type="number" name="out${i}" value="${arr[i]?.out ?? ''}" min="0" style="width:60px;"></td>
+      </tr>`;
+    }
+    document.getElementById('editTableBody').innerHTML = html;
+    document.getElementById('editMsg').textContent = '';
+  });
+}
+
+function saveEditTable() {
+  const date = document.getElementById('edit-date').value;
+  if (!date) return;
+  const form = document.getElementById('editForm');
+  let arr = [];
+  for (let i = 0; i < timeSlots.length; i++) {
+    const inVal = Number(form[`in${i}`].value) || 0;
+    const outVal = Number(form[`out${i}`].value) || 0;
+    arr.push({ in: inVal, out: outVal });
+  }
+  db.ref('entrance/' + date).set(arr, err => {
+    if (err) {
+      document.getElementById('editMsg').textContent = '保存失敗';
+      document.getElementById('editMsg').style.color = 'red';
+    } else {
+      document.getElementById('editMsg').textContent = '保存しました';
+      document.getElementById('editMsg').style.color = 'green';
+    }
   });
 }
 </script>
