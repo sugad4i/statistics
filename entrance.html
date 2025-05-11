@@ -62,6 +62,16 @@
   <div id="weekdayStayStats" class="stats-area"></div>
 </div>
 
+<!-- ④ 日時指定でその日の1日分データ表 -->
+<div class="graph-area">
+  <h3>指定日の1日データ表</h3>
+  <div class="graph-controls">
+    <label>日付: <input type="date" id="table-date"></label>
+    <button onclick="showDayTable()">データ表示</button>
+  </div>
+  <div id="dayTableArea" class="stats-area"></div>
+</div>
+
 <script>
 const timeSlots = ["22:00-23:00", "23:00-24:00", "24:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-4:30"];
 
@@ -189,6 +199,29 @@ function showWeekdayTrends() {
       html += `${l}: ${stayAverages[i].toFixed(1)}<br>`;
     });
     document.getElementById('weekdayStayStats').innerHTML = html;
+  });
+}
+
+// ④ 日時指定でその日の1日分データ表
+function showDayTable() {
+  const date = document.getElementById('table-date').value;
+  if (!date) return;
+  db.ref('entrance/' + date).get().then(snapshot => {
+    if (!snapshot.exists()) {
+      document.getElementById('dayTableArea').innerHTML = 'データがありません';
+      return;
+    }
+    const arr = snapshot.val();
+    let html = '<table border="1" style="margin:auto;border-collapse:collapse;"><tr><th>時間帯</th><th>IN</th><th>OUT</th></tr>';
+    for (let i = 0; i < arr.length; i++) {
+      html += `<tr>
+        <td>${timeSlots[i] || ''}</td>
+        <td>${arr[i]?.in ?? ''}</td>
+        <td>${arr[i]?.out ?? ''}</td>
+      </tr>`;
+    }
+    html += '</table>';
+    document.getElementById('dayTableArea').innerHTML = html;
   });
 }
 </script>
