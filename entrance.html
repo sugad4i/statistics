@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>エントランス集計グラフ ver1.0.0</title>
+  <title>エントランス集計グラフ ver1.1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: 'Noto Sans JP', sans-serif; margin: 0; background-color: #fafafa; }
@@ -31,8 +31,12 @@
 </head>
 <body>
 <header>エントランス集計グラフ ver1.0.0</header>
+<!-- ...省略（head・Firebase設定などはそのまま）... -->
 
-<!-- ① 日ごとのIN合計推移グラフ -->
+<body>
+<header>エントランス集計グラフ ver1.1</header>
+
+<!-- 1. 日ごとのIN合計推移グラフ -->
 <div class="graph-area">
   <h3>日ごとのIN合計推移</h3>
   <div class="graph-controls">
@@ -41,38 +45,37 @@
     <button onclick="showDailyTrends()">日ごとグラフ</button>
   </div>
   <canvas id="trendChart"></canvas>
-  <div id="trendStats" class="stats-area"></div>
 </div>
 
-<!-- ② 日時指定でその日の時間帯ごとのIN/OUT推移グラフ -->
+<!-- 2. 時間帯ごとの「中にいる人数」推移グラフ -->
 <div class="graph-area">
-  <h3>時間帯ごとのIN/OUT推移</h3>
+  <h3>時間帯ごとの中にいる人数推移</h3>
   <div class="graph-controls">
     <label>日付: <input type="date" id="slot-date"></label>
-    <button onclick="showSlotTrends()">時間帯グラフ</button>
+    <button onclick="showStayTrends()">人数推移グラフ</button>
   </div>
-  <canvas id="slotChart"></canvas>
+  <canvas id="stayChart"></canvas>
 </div>
 
-<!-- ③ 曜日ごとのIN合計平均グラフ＋3:00-4:30の滞在平均人数 -->
+<!-- 3. 曜日ごとのIN合計平均グラフ＋ピーク人数 -->
 <div class="graph-area">
-  <h3>曜日ごとのIN合計平均・3:00-4:30滞在平均</h3>
+  <h3>曜日ごとのIN合計平均・ピーク人数</h3>
   <button onclick="showWeekdayTrends()">曜日別グラフ</button>
   <canvas id="weekdayChart"></canvas>
-  <div id="weekdayStayStats" class="stats-area"></div>
 </div>
 
-<!-- ④ 日時指定でその日の1日分データ表 -->
+<!-- 4. 日ごとのIN合計人数とピーク人数の推移 -->
 <div class="graph-area">
-  <h3>指定日の1日データ表</h3>
+  <h3>日ごとのIN合計人数とピーク人数の推移</h3>
   <div class="graph-controls">
-    <label>日付: <input type="date" id="table-date"></label>
-    <button onclick="showDayTable()">データ表示</button>
+    <label>開始日: <input type="date" id="daily2-start"></label>
+    <label>終了日: <input type="date" id="daily2-end"></label>
+    <button onclick="showDailyPeakTrends()">推移グラフ</button>
   </div>
-  <div id="dayTableArea" class="stats-area"></div>
+  <canvas id="dailyPeakChart"></canvas>
 </div>
 
-<!-- ⑤ データ修正用入力フォーム -->
+<!-- 5. データ修正・追加フォーム -->
 <div class="graph-area">
   <h3>データ修正・追加フォーム</h3>
   <div class="graph-controls">
@@ -86,9 +89,7 @@
         <th>IN</th>
         <th>OUT</th>
       </tr>
-      <tbody id="editTableBody">
-        <!-- JSで行を生成 -->
-      </tbody>
+      <tbody id="editTableBody"></tbody>
     </table>
     <button type="submit" style="margin-top:10px;">保存</button>
     <span id="editMsg" style="margin-left:10px;color:green;"></span>
@@ -98,7 +99,7 @@
 <script>
 const timeSlots = ["22:00-23:00", "23:00-24:00", "24:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-4:30"];
 
-// ① 日ごとのIN合計推移グラフ
+// 1. 日ごとのIN合計推移グラフ
 function showDailyTrends() {
   db.ref('entrance').get().then(snapshot => {
     if (!snapshot.exists()) return;
@@ -129,7 +130,6 @@ function showDailyTrends() {
         inTotals = inTotals.slice(0, idx);
       }
     }
-    // グラフ描画
     const ctx = document.getElementById('trendChart').getContext('2d');
     if (window.trendChartObj) window.trendChartObj.destroy();
     window.trendChartObj = new Chart(ctx, {
@@ -140,67 +140,64 @@ function showDailyTrends() {
           { label: 'IN合計', data: inTotals, borderColor: 'blue', fill: false }
         ]
       },
-      options: {
-        responsive: true,
-        scales: { y: { beginAtZero: true } }
-      }
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
     });
-    // 最大・最小・平均値表示
-    document.getElementById('trendStats').innerHTML =
-      `IN最大:${Math.max(...inTotals)} 最小:${Math.min(...inTotals)} 平均:${(inTotals.reduce((a,b)=>a+b,0)/inTotals.length).toFixed(1)}`;
   });
 }
 
-// ② 日時指定でその日の時間帯ごとのIN/OUT推移グラフ
-function showSlotTrends() {
+// 2. 時間帯ごとの「中にいる人数」推移グラフ
+function showStayTrends() {
   const date = document.getElementById('slot-date').value;
   if (!date) return;
   db.ref('entrance/' + date).get().then(snapshot => {
     if (!snapshot.exists()) return;
     const arr = snapshot.val();
-    let labels = timeSlots;
-    let inArr = arr.map(d => Number(d.in) || 0);
-    let outArr = arr.map(d => Number(d.out) || 0);
-    const ctx = document.getElementById('slotChart').getContext('2d');
-    if (window.slotChartObj) window.slotChartObj.destroy();
-    window.slotChartObj = new Chart(ctx, {
+    let stayArr = [];
+    let stay = 0;
+    for (let i = 0; i < timeSlots.length; i++) {
+      stay += (Number(arr[i]?.in) || 0) - (Number(arr[i]?.out) || 0);
+      stayArr.push(stay);
+    }
+    const ctx = document.getElementById('stayChart').getContext('2d');
+    if (window.stayChartObj) window.stayChartObj.destroy();
+    window.stayChartObj = new Chart(ctx, {
       type: 'line',
       data: {
-        labels,
+        labels: timeSlots,
         datasets: [
-          { label: 'IN', data: inArr, borderColor: 'blue', fill: false },
-          { label: 'OUT', data: outArr, borderColor: 'red', fill: false }
+          { label: '中にいる人数', data: stayArr, borderColor: 'green', fill: false }
         ]
-      }
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
     });
   });
 }
 
-// ③ 曜日ごとのIN合計平均グラフ＋3:00-4:30の滞在平均人数
+// 3. 曜日ごとのIN合計平均グラフ＋ピーク人数
 function showWeekdayTrends() {
   db.ref('entrance').get().then(snapshot => {
     if (!snapshot.exists()) return;
     const allData = snapshot.val();
-    const weekdayStats = [[],[],[],[],[],[],[]]; // 0:日, 1:月...
-    const stayStats = [[],[],[],[],[],[],[]];
+    const weekdayStats = [[],[],[],[],[],[],[]];
+    const peakStats = [[],[],[],[],[],[],[]];
     Object.keys(allData).forEach(date => {
       const arr = allData[date];
       if (Array.isArray(arr)) {
         const inSum = arr.reduce((s, d) => s + (Number(d.in) || 0), 0);
         const wd = new Date(date).getDay();
         weekdayStats[wd].push(inSum);
-        // 3:00-4:30の滞在人数（22:00から3:00までのin-out累積＋4:00-4:30のin）
+        // ピーク人数（3:00-4:30の滞在人数）
         let stay = 0;
         for (let i = 0; i <= 5; i++) {
           stay += (Number(arr[i]?.in) || 0) - (Number(arr[i]?.out) || 0);
         }
         stay += (Number(arr[6]?.in) || 0);
-        stayStats[wd].push(stay);
+        peakStats[wd].push(stay);
       }
     });
     const labels = ['日','月','火','水','木','金','土'];
     const inAverages = weekdayStats.map(arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0);
-    const stayAverages = stayStats.map(arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0);
+    const peakAverages = peakStats.map(arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0);
     const ctx = document.getElementById('weekdayChart').getContext('2d');
     if (window.weekdayChartObj) window.weekdayChartObj.destroy();
     window.weekdayChartObj = new Chart(ctx, {
@@ -208,7 +205,8 @@ function showWeekdayTrends() {
       data: {
         labels,
         datasets: [
-          { label: 'IN合計平均', data: inAverages, backgroundColor: 'blue' }
+          { label: 'IN合計平均', data: inAverages, backgroundColor: 'blue' },
+          { label: 'ピーク人数', data: peakAverages, type: 'line', borderColor: 'red', backgroundColor: 'red', fill: false, yAxisID: 'y' }
         ]
       },
       options: {
@@ -216,39 +214,65 @@ function showWeekdayTrends() {
         scales: { y: { beginAtZero: true } }
       }
     });
-    // 3:00-4:30の滞在平均人数表示
-    let html = '3:00-4:30の滞在平均人数<br>';
-    labels.forEach((l, i) => {
-      html += `${l}: ${stayAverages[i].toFixed(1)}<br>`;
+  });
+}
+
+// 4. 日ごとのIN合計人数とピーク人数の推移
+function showDailyPeakTrends() {
+  db.ref('entrance').get().then(snapshot => {
+    if (!snapshot.exists()) return;
+    const allData = snapshot.val();
+    let labels = [], inTotals = [], peaks = [];
+    Object.keys(allData).sort().forEach(date => {
+      const arr = allData[date];
+      if (Array.isArray(arr)) {
+        const inSum = arr.reduce((s, d) => s + (Number(d.in) || 0), 0);
+        let stay = 0;
+        for (let i = 0; i <= 5; i++) {
+          stay += (Number(arr[i]?.in) || 0) - (Number(arr[i]?.out) || 0);
+        }
+        stay += (Number(arr[6]?.in) || 0);
+        labels.push(date);
+        inTotals.push(inSum);
+        peaks.push(stay);
+      }
     });
-    document.getElementById('weekdayStayStats').innerHTML = html;
+    // 期間フィルタ
+    const start = document.getElementById('daily2-start').value;
+    const end = document.getElementById('daily2-end').value;
+    if (start) {
+      const idx = labels.findIndex(d => d >= start);
+      if (idx > 0) {
+        labels = labels.slice(idx);
+        inTotals = inTotals.slice(idx);
+        peaks = peaks.slice(idx);
+      }
+    }
+    if (end) {
+      const idx = labels.findIndex(d => d > end);
+      if (idx >= 0) {
+        labels = labels.slice(0, idx);
+        inTotals = inTotals.slice(0, idx);
+        peaks = peaks.slice(0, idx);
+      }
+    }
+    const ctx = document.getElementById('dailyPeakChart').getContext('2d');
+    if (window.dailyPeakChartObj) window.dailyPeakChartObj.destroy();
+    window.dailyPeakChartObj = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'IN合計', data: inTotals, borderColor: 'blue', fill: false },
+          { label: 'ピーク人数', data: peaks, borderColor: 'red', fill: false }
+        ]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
   });
 }
 
-// ④ 日時指定でその日の1日分データ表
-function showDayTable() {
-  const date = document.getElementById('table-date').value;
-  if (!date) return;
-  db.ref('entrance/' + date).get().then(snapshot => {
-    if (!snapshot.exists()) {
-      document.getElementById('dayTableArea').innerHTML = 'データがありません';
-      return;
-    }
-    const arr = snapshot.val();
-    let html = '<table border="1" style="margin:auto;border-collapse:collapse;"><tr><th>時間帯</th><th>IN</th><th>OUT</th></tr>';
-    for (let i = 0; i < arr.length; i++) {
-      html += `<tr>
-        <td>${timeSlots[i] || ''}</td>
-        <td>${arr[i]?.in ?? ''}</td>
-        <td>${arr[i]?.out ?? ''}</td>
-      </tr>`;
-    }
-    html += '</table>';
-    document.getElementById('dayTableArea').innerHTML = html;
-  });
-}
-
-// ⑤ データ修正用入力フォーム
+// 5. データ修正・追加フォーム（そのまま）
 function loadEditTable() {
   const date = document.getElementById('edit-date').value;
   if (!date) return;
