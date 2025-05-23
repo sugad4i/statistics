@@ -150,10 +150,14 @@ function showStayTrends() {
   db.ref('entrance/' + date).get().then(snapshot => {
     if (!snapshot.exists()) return;
     const arr = snapshot.val();
-    let stayArr = [];
+    let inArr = [], outArr = [], stayArr = [];
     let stay = 0;
     for (let i = 0; i < timeSlots.length; i++) {
-      stay += (Number(arr[i]?.in) || 0) - (Number(arr[i]?.out) || 0);
+      const inVal = Number(arr[i]?.in) || 0;
+      const outVal = Number(arr[i]?.out) || 0;
+      inArr.push(inVal);
+      outArr.push(outVal);
+      stay += inVal - outVal;
       stayArr.push(stay);
     }
     const ctx = document.getElementById('stayChart').getContext('2d');
@@ -163,6 +167,8 @@ function showStayTrends() {
       data: {
         labels: timeSlots,
         datasets: [
+          { label: 'IN', data: inArr, borderColor: 'blue', fill: false },
+          { label: 'OUT', data: outArr, borderColor: 'red', fill: false },
           { label: '中にいる人数', data: stayArr, borderColor: 'green', fill: false }
         ]
       },
@@ -171,11 +177,15 @@ function showStayTrends() {
   });
 }
 
-// 3. 曜日ごとのIN合計平均グラフ＋ピーク人数
+// ...existing code...
+
+// 3. 曜日ごとのIN合計平均グラフ＋ピーク人数（木金土日のみ表示）
 function showWeekdayTrends() {
   db.ref('entrance').get().then(snapshot => {
     if (!snapshot.exists()) return;
     const allData = snapshot.val();
+    // 木:4, 金:5, 土:6, 日:0
+    const targetDays = [4, 5, 6, 0];
     const weekdayStats = [[],[],[],[],[],[],[]];
     const peakStats = [[],[],[],[],[],[],[]];
     Object.keys(allData).forEach(date => {
@@ -193,9 +203,10 @@ function showWeekdayTrends() {
         peakStats[wd].push(stay);
       }
     });
-    const labels = ['日','月','火','水','木','金','土'];
-    const inAverages = weekdayStats.map(arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0);
-    const peakAverages = peakStats.map(arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0);
+    // 木金土日だけ抽出
+    const labels = ['木','金','土','日'];
+    const inAverages = targetDays.map(idx => weekdayStats[idx].length ? weekdayStats[idx].reduce((a,b)=>a+b,0)/weekdayStats[idx].length : 0);
+    const peakAverages = targetDays.map(idx => peakStats[idx].length ? peakStats[idx].reduce((a,b)=>a+b,0)/peakStats[idx].length : 0);
     const ctx = document.getElementById('weekdayChart').getContext('2d');
     if (window.weekdayChartObj) window.weekdayChartObj.destroy();
     window.weekdayChartObj = new Chart(ctx, {
@@ -214,6 +225,7 @@ function showWeekdayTrends() {
     });
   });
 }
+
 
 // 4. 日ごとのIN合計人数とピーク人数の推移
 function showDailyPeakTrends() {
