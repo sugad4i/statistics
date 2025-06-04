@@ -160,7 +160,9 @@ function updateCountryOptions(selectedIdx) {
 regionSelect.onchange = () => updateCountryOptions();
 updateCountryOptions();
 
-// 日付自動入力（22:00～翌4:59は前日をセット）
+document.getElementById('date-input').addEventListener('change', renderTable);
+
+// 日付自動入力（22:00～翌19:59は前日をセット）
 function getEigyoDate(dateObj = new Date()) {
   const hour = dateObj.getHours();
   if (hour >= 22 || hour < 19) {
@@ -206,77 +208,32 @@ function renderTable() {
   tbody.innerHTML = '';
   // 日付フィルター
   const selectedDate = document.getElementById('date-input').value;
-  // 指定日のみ＆新しい順
+  // countryDataの配列順（新しい入力が上）でフィルタ
   const filtered = countryData
+    .map((row, idx) => ({ ...row, _originalIdx: idx })) // 元のインデックスを保持
     .filter(row => row.date === selectedDate)
-    .sort((a, b) => {
-      // 時間がなければ後ろに
-      if (!a.time) return 1;
-      if (!b.time) return -1;
-      // 降順（新しい順）
-      return b.time.localeCompare(a.time);
-    });
+    .reverse(); // 配列の末尾が新しいのでreverseで新しい順に
 
-  filtered.forEach((row, idx) => {
+  filtered.forEach((row) => {
     const c = countryList[row.countryIdx];
-    if (editingIdx === idx) {
-      // 編集モード（必要なら編集機能も修正）
-      let regionOptions = regionList.map(r => `<option value="${r}"${r === c.region ? ' selected' : ''}>${r}</option>`).join('');
-      let countryOptions = '';
-      countryList.forEach((cc, i) => {
-        if (cc.region === c.region) {
-          countryOptions += `<option value="${i}"${i === row.countryIdx ? ' selected' : ''}>${cc.flag} ${cc.jp} (${cc.en})</option>`;
-        }
-      });
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><input type="date" value="${row.date}" id="edit-date-${idx}" style="width:120px;"></td>
-        <td>${row.time || ''}</td>
-        <td>
-          <select id="edit-region-${idx}" style="width:110px;">${regionOptions}</select>
-        </td>
-        <td>
-          <select id="edit-country-${idx}" style="width:180px;">${countryOptions}</select>
-        </td>
-        <td><input type="number" id="edit-count-${idx}" value="${row.count}" min="1" style="width:70px;"></td>
-        <td>
-          <button class="save-btn" onclick="saveEditRow(${idx})">保存</button>
-          <button class="edit-btn" onclick="cancelEdit()">キャンセル</button>
-        </td>
-      `;
-      setTimeout(() => {
-        document.getElementById(`edit-region-${idx}`).onchange = function() {
-          const region = this.value;
-          let countryOptions = '';
-          countryList.forEach((cc, i) => {
-            if (cc.region === region) {
-              countryOptions += `<option value="${i}">${cc.flag} ${cc.jp} (${cc.en})</option>`;
-            }
-          });
-          document.getElementById(`edit-country-${idx}`).innerHTML = countryOptions;
-        };
-      }, 0);
-      tbody.appendChild(tr);
-    } else {
-      // 通常表示
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${row.date}</td>
-        <td>${row.time || ''}</td>
-        <td>${c.region}</td>
-        <td>${c.flag} ${c.jp} (${c.en})</td>
-        <td>${row.count}</td>
-        <td>
-          <button class="edit-btn" onclick="startEdit(${countryData.indexOf(row)})">編集</button>
-          <button onclick="deleteRow(${countryData.indexOf(row)})">削除</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    }
+    // 編集ボタンを削除
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.date}</td>
+      <td>${row.time || ''}</td>
+      <td>${c.region}</td>
+      <td>${c.flag} ${c.jp} (${c.en})</td>
+      <td>${row.count}</td>
+      <td>
+        <button onclick="deleteRow(${row._originalIdx})">削除</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 
 // ...existing code...
+
 function addCountryRow() {
   const date = document.getElementById('date-input').value;
   const countryIdx = Number(document.getElementById('country-select').value);
