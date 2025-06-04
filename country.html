@@ -74,10 +74,61 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const countryList = [
-  // ...（省略：国リストは今まで通り）...
+  // アジア
   {region:"アジア", flag:"🇰🇷", jp:"韓国", en:"South Korea"},
   {region:"アジア", flag:"🇨🇳", jp:"中国", en:"China"},
-  // ...（以下略）...
+  {region:"アジア", flag:"🇹🇼", jp:"台湾", en:"Taiwan"},
+  {region:"アジア", flag:"🇭🇰", jp:"香港", en:"Hong Kong"},
+  {region:"アジア", flag:"🇹🇭", jp:"タイ", en:"Thailand"},
+  {region:"アジア", flag:"🇻🇳", jp:"ベトナム", en:"Vietnam"},
+  {region:"アジア", flag:"🇵🇭", jp:"フィリピン", en:"Philippines"},
+  {region:"アジア", flag:"🇮🇩", jp:"インドネシア", en:"Indonesia"},
+  {region:"アジア", flag:"🇲🇾", jp:"マレーシア", en:"Malaysia"},
+  {region:"アジア", flag:"🇸🇬", jp:"シンガポール", en:"Singapore"},
+  {region:"アジア", flag:"🇮🇳", jp:"インド", en:"India"},
+  {region:"アジア", flag:"🇵🇰", jp:"パキスタン", en:"Pakistan"},
+  {region:"アジア", flag:"🇳🇵", jp:"ネパール", en:"Nepal"},
+  {region:"アジア", flag:"🇱🇰", jp:"スリランカ", en:"Sri Lanka"},
+  {region:"アジア", flag:"🇲🇳", jp:"モンゴル", en:"Mongolia"},
+  {region:"アジア", flag:"🇧🇩", jp:"バングラデシュ", en:"Bangladesh"},
+  {region:"アジア", flag:"🇰🇭", jp:"カンボジア", en:"Cambodia"},
+  {region:"アジア", flag:"🇱🇦", jp:"ラオス", en:"Laos"},
+  {region:"アジア", flag:"🇧🇳", jp:"ブルネイ", en:"Brunei"},
+  {region:"アジア", flag:"🇹🇱", jp:"東ティモール", en:"Timor-Leste"},
+  // 欧州
+  {region:"欧州", flag:"🇬🇧", jp:"イギリス", en:"United Kingdom"},
+  {region:"欧州", flag:"🇫🇷", jp:"フランス", en:"France"},
+  {region:"欧州", flag:"🇩🇪", jp:"ドイツ", en:"Germany"},
+  {region:"欧州", flag:"🇮🇹", jp:"イタリア", en:"Italy"},
+  {region:"欧州", flag:"🇪🇸", jp:"スペイン", en:"Spain"},
+  {region:"欧州", flag:"🇳🇱", jp:"オランダ", en:"Netherlands"},
+  {region:"欧州", flag:"🇨🇭", jp:"スイス", en:"Switzerland"},
+  {region:"欧州", flag:"🇸🇪", jp:"スウェーデン", en:"Sweden"},
+  {region:"欧州", flag:"🇳🇴", jp:"ノルウェー", en:"Norway"},
+  {region:"欧州", flag:"🇫🇮", jp:"フィンランド", en:"Finland"},
+  {region:"欧州", flag:"🇩🇰", jp:"デンマーク", en:"Denmark"},
+  {region:"欧州", flag:"🇦🇹", jp:"オーストリア", en:"Austria"},
+  {region:"欧州", flag:"🇵🇱", jp:"ポーランド", en:"Poland"},
+  {region:"欧州", flag:"🇨🇿", jp:"チェコ", en:"Czech Republic"},
+  {region:"欧州", flag:"🇧🇪", jp:"ベルギー", en:"Belgium"},
+  // 北米
+  {region:"北米", flag:"🇺🇸", jp:"アメリカ", en:"United States"},
+  {region:"北米", flag:"🇨🇦", jp:"カナダ", en:"Canada"},
+  // 中南米
+  {region:"中南米", flag:"🇲🇽", jp:"メキシコ", en:"Mexico"},
+  {region:"中南米", flag:"🇧🇷", jp:"ブラジル", en:"Brazil"},
+  {region:"中南米", flag:"🇦🇷", jp:"アルゼンチン", en:"Argentina"},
+  {region:"中南米", flag:"🇨🇱", jp:"チリ", en:"Chile"},
+  {region:"中南米", flag:"🇵🇪", jp:"ペルー", en:"Peru"},
+  {region:"中南米", flag:"🇨🇴", jp:"コロンビア", en:"Colombia"},
+  // オセアニア
+  {region:"オセアニア", flag:"🇦🇺", jp:"オーストラリア", en:"Australia"},
+  {region:"オセアニア", flag:"🇳🇿", jp:"ニュージーランド", en:"New Zealand"},
+  // 中東・アフリカ
+  {region:"中東・アフリカ", flag:"🇹🇷", jp:"トルコ", en:"Turkey"},
+  {region:"中東・アフリカ", flag:"🇸🇦", jp:"サウジアラビア", en:"Saudi Arabia"},
+  {region:"中東・アフリカ", flag:"🇦🇪", jp:"アラブ首長国連邦", en:"United Arab Emirates"},
+  {region:"中東・アフリカ", flag:"🇿🇦", jp:"南アフリカ", en:"South Africa"},
   {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
 ];
 
