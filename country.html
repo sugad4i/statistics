@@ -332,14 +332,22 @@ function exportSummary() {
     document.getElementById('export-text').value = '該当日のデータがありません';
     return;
   }
-  let text = `日時　調査人数\n${selectedDate}　${filtered.reduce((sum, row) => sum + Number(row.count), 0)}人\n\n国ごとの人数\n`;
+  // 国ごとに集計
+  const countryMap = {};
   filtered.forEach(row => {
     const c = countryList[row.countryIdx];
-    text += `${c.flag} ${c.jp} (${c.en})：${row.count}人\n`;
+    const key = `${c.flag} ${c.jp} (${c.en})`;
+    if (!countryMap[key]) countryMap[key] = 0;
+    countryMap[key] += Number(row.count);
+  });
+  // 多い順に並び替え
+  const sorted = Object.entries(countryMap).sort((a, b) => b[1] - a[1]);
+  let text = `日時　調査人数\n${selectedDate}　${filtered.reduce((sum, row) => sum + Number(row.count), 0)}人\n\n国ごとの人数\n`;
+  sorted.forEach(([name, count]) => {
+    text += `${name}：${count}人\n`;
   });
   document.getElementById('export-text').value = text.trim();
 }
-
 function copyExportText() {
   const textarea = document.getElementById('export-text');
   textarea.select();
