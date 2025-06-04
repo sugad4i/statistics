@@ -30,24 +30,34 @@
       padding: 40px 30px 32px 30px;
       text-align: center;
     }
+    section {
+      margin-bottom: 40px;
+    }
+    h2 {
+      color: #2563eb;
+      font-size: 22px;
+      margin-bottom: 18px;
+      margin-top: 0;
+      letter-spacing: 1px;
+    }
     ul {
       list-style: none;
       padding: 0;
       margin: 0;
     }
     li {
-      margin: 28px 0;
+      margin: 18px 0;
     }
     a {
       display: inline-block;
       width: 100%;
       max-width: 350px;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 500;
       color: #2563eb;
       background: linear-gradient(90deg, #e0e7ff 0%, #bae6fd 100%);
       border-radius: 8px;
-      padding: 18px 0;
+      padding: 15px 0;
       text-decoration: none;
       box-shadow: 0 2px 8px rgba(59,130,246,0.07);
       transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
@@ -70,7 +80,8 @@
     @media (max-width: 600px) {
       main { padding: 18px 4vw; }
       header { font-size: 22px; padding: 18px 5px 12px 5px; }
-      a { font-size: 17px; padding: 13px 0; }
+      a { font-size: 16px; padding: 11px 0; }
+      h2 { font-size: 17px; }
     }
   </style>
 </head>
@@ -80,13 +91,20 @@
     <div class="desc">
       各種集計・記録ページへアクセスできます。
     </div>
-    <ul>
-      <li><a href="https://sugad4i.github.io/statistics/entrance-statics.html">エントランス集計グラフ</a></li>
-      <li><a href="https://sugad4i.github.io/statistics/entrance.html">エントランス入力</a></li>
-      <li><a href="https://sugad4i.github.io/statistics/country.html">国別来場者記録</a></li>
-      <li><a href="https://sugad4i.github.io/statistics/countryーstatics.html">国別来場者累計データ</a></li>
-      <!-- 他のページもここに追加できます -->
-    </ul>
+    <section>
+      <h2>入力ページ</h2>
+      <ul>
+        <li><a href="https://sugad4i.github.io/statistics/entrance.html">エントランス入力</a></li>
+        <li><a href="https://sugad4i.github.io/statistics/country.html">国別来場者入力</a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>累計データ</h2>
+      <ul>
+        <li><a href="https://sugad4i.github.io/statistics/entrance-statics.html">エントランス累計データ</a></li>
+        <li><a href="https://sugad4i.github.io/statistics/country-statics.html">国別来場者累計データ</a></li>
+      </ul>
+    </section>
   </main>
 </body>
 </html>
