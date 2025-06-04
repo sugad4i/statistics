@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>エントランス集計グラフ ver1.1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: 'Noto Sans JP', sans-serif; margin: 0; background-color: #fafafa; }
+    header { background: #eee; padding: 10px 20px; font-size: 20px; font-weight: bold; text-align: center; }
+    .graph-area { margin: 40px 20px 20px 20px; text-align: center; }
+    .graph-controls { margin-bottom: 10px; }
+    .graph-controls label { margin: 0 8px; }
+    .stats-area { margin: 10px 0 30px 0; font-size: 15px; color: #333; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDSZohtnPXem6m7f6A63KjXTQMUUFNk0Cg",
+      authDomain: "ghost-entrance.firebaseapp.com",
+      databaseURL: "https://ghost-entrance-default-rtdb.firebaseio.com",
+      projectId: "ghost-entrance",
+      storageBucket: "ghost-entrance.firebasestorage.app",
+      messagingSenderId: "977704976997",
+      appId: "1:977704976997:web:e61ef8bdc61babc2757c8c"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
+</head>
+
+
+<body>
+<header>エントランス集計グラフ ver1.1</header>
+
+<!-- 1. 日ごとのIN合計推移グラフ -->
+<div class="graph-area">
+  <h3>日ごとのIN合計推移</h3>
+  <div class="graph-controls">
+    <label>開始日: <input type="date" id="trend-start"></label>
+    <label>終了日: <input type="date" id="trend-end"></label>
+    <button onclick="showDailyTrends()">日ごとグラフ</button>
+  </div>
+  <canvas id="trendChart"></canvas>
+</div>
+
+<!-- 2. 時間帯ごとの「中にいる人数」推移グラフ -->
+<div class="graph-area">
+  <h3>時間帯ごとの中にいる人数推移</h3>
+  <div class="graph-controls">
+    <label>日付: <input type="date" id="slot-date"></label>
+    <button onclick="showStayTrends()">人数推移グラフ</button>
+  </div>
+  <canvas id="stayChart"></canvas>
+</div>
+
+<!-- 3. 曜日ごとのIN合計平均グラフ＋ピーク人数 -->
+<div class="graph-area">
+  <h3>曜日ごとのIN合計平均・ピーク人数</h3>
+  <button onclick="showWeekdayTrends()">曜日別グラフ</button>
+  <canvas id="weekdayChart"></canvas>
+</div>
+
+<!-- 4. 日ごとのIN合計人数とピーク人数の推移 -->
+<div class="graph-area">
+  <h3>日ごとのIN合計人数とピーク人数の推移</h3>
+  <div class="graph-controls">
+    <label>開始日: <input type="date" id="daily2-start"></label>
+    <label>終了日: <input type="date" id="daily2-end"></label>
+    <button onclick="showDailyPeakTrends()">推移グラフ</button>
+  </div>
+  <canvas id="dailyPeakChart"></canvas>
+</div>
+
+<!-- 5. データ修正・追加フォーム -->
+<div class="graph-area">
+  <h3>データ修正・追加フォーム</h3>
+  <div class="graph-controls">
+    <label>日付: <input type="date" id="edit-date"></label>
+    <button onclick="loadEditTable()">読み込み</button>
+  </div>
+  <form id="editForm" onsubmit="saveEditTable(); return false;">
+    <table border="1" style="margin:auto;border-collapse:collapse;">
+      <tr>
+        <th>時間帯</th>
+        <th>IN</th>
+        <th>OUT</th>
+      </tr>
+      <tbody id="editTableBody"></tbody>
+    </table>
+    <button type="submit" style="margin-top:10px;">保存</button>
+    <span id="editMsg" style="margin-left:10px;color:green;"></span>
+  </form>
+</div>
+
+<script>
+const timeSlots = ["22:00-23:00", "23:00-24:00", "24:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-4:30"];
+
+// 1. 日ごとのIN合計推移グラフ
+function showDailyTrends() {
+  db.ref('entrance').get().then(snapshot => {
+    if (!snapshot.exists()) return;
+    const allData = snapshot.val();
+    let labels = [], inTotals = [];
+    Object.keys(allData).sort().forEach(date => {
+      const arr = allData[date];
+      if (Array.isArray(arr)) {
+        const inSum = arr.reduce((s, d) => s + (Number(d.in) || 0), 0);
+        labels.push(date);
+        inTotals.push(inSum);
+      }
+    });
+    // 期間フィルタ
+    const start = document.getElementById('trend-start').value;
+    const end = document.getElementById('trend-end').value;
+    if (start) {
+      const idx = labels.findIndex(d => d >= start);
+      if (idx > 0) {
+        labels = labels.slice(idx);
+        inTotals = inTotals.slice(idx);
+      }
+    }
+    if (end) {
+      const idx = labels.findIndex(d => d > end);
+      if (idx >= 0) {
+        labels = labels.slice(0, idx);
+        inTotals = inTotals.slice(0, idx);
+      }
+    }
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    if (window.trendChartObj) window.trendChartObj.destroy();
+    window.trendChartObj = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'IN合計', data: inTotals, borderColor: 'blue', fill: false }
+        ]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+  });
+}
+
+// 2. 時間帯ごとの「中にいる人数」推移グラフ
+function showStayTrends() {
+  const date = document.getElementById('slot-date').value;
+  if (!date) return;
+  db.ref('entrance/' + date).get().then(snapshot => {
+    if (!snapshot.exists()) return;
+    const arr = snapshot.val();
+    let inArr = [], outArr = [], stayArr = [];
+    let stay = 0;
+    for (let i = 0; i < timeSlots.length; i++) {
+      const inVal = Number(arr[i]?.in) || 0;
+      const outVal = Number(arr[i]?.out) || 0;
+      inArr.push(inVal);
+      outArr.push(outVal);
+      stay += inVal - outVal;
+      stayArr.push(stay);
+    }
+    const ctx = document.getElementById('stayChart').getContext('2d');
+    if (window.stayChartObj) window.stayChartObj.destroy();
+    window.stayChartObj = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: timeSlots,
+        datasets: [
+          { label: 'IN', data: inArr, borderColor: 'blue', fill: false },
+          { label: 'OUT', data: outArr, borderColor: 'red', fill: false },
+          { label: '中にいる人数', data: stayArr, borderColor: 'green', fill: false }
+        ]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+  });
+}
+
+// ...existing code...
+
+// 3. 曜日ごとのIN合計平均グラフ＋ピーク人数（木金土日のみ表示）
+function showWeekdayTrends() {
+  db.ref('entrance').get().then(snapshot => {
+    if (!snapshot.exists()) return;
+    const allData = snapshot.val();
+    // 木:4, 金:5, 土:6, 日:0
+    const targetDays = [4, 5, 6, 0];
+    const weekdayStats = [[],[],[],[],[],[],[]];
+    const peakStats = [[],[],[],[],[],[],[]];
+    Object.keys(allData).forEach(date => {
+      const arr = allData[date];
+      if (Array.isArray(arr)) {
+        const inSum = arr.reduce((s, d) => s + (Number(d.in) || 0), 0);
+        const wd = new Date(date).getDay();
+        weekdayStats[wd].push(inSum);
+        // ピーク人数（3:00-4:30の滞在人数）
+        let stay = 0;
+        for (let i = 0; i <= 5; i++) {
+          stay += (Number(arr[i]?.in) || 0) - (Number(arr[i]?.out) || 0);
+        }
+        stay += (Number(arr[6]?.in) || 0);
+        peakStats[wd].push(stay);
+      }
+    });
+    // 木金土日だけ抽出
+    const labels = ['木','金','土','日'];
+    const inAverages = targetDays.map(idx => weekdayStats[idx].length ? weekdayStats[idx].reduce((a,b)=>a+b,0)/weekdayStats[idx].length : 0);
+    const peakAverages = targetDays.map(idx => peakStats[idx].length ? peakStats[idx].reduce((a,b)=>a+b,0)/peakStats[idx].length : 0);
+    const ctx = document.getElementById('weekdayChart').getContext('2d');
+    if (window.weekdayChartObj) window.weekdayChartObj.destroy();
+    window.weekdayChartObj = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'IN合計平均', data: inAverages, backgroundColor: 'blue' },
+          { label: 'ピーク人数', data: peakAverages, type: 'line', borderColor: 'red', backgroundColor: 'red', fill: false, yAxisID: 'y' }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  });
+}
+
+
+// 4. 日ごとのIN合計人数とピーク人数の推移
+function showDailyPeakTrends() {
+  db.ref('entrance').get().then(snapshot => {
+    if (!snapshot.exists()) return;
+    const allData = snapshot.val();
+    let labels = [], inTotals = [], peaks = [];
+    Object.keys(allData).sort().forEach(date => {
+      const arr = allData[date];
+      if (Array.isArray(arr)) {
+        const inSum = arr.reduce((s, d) => s + (Number(d.in) || 0), 0);
+        let stay = 0;
+        for (let i = 0; i <= 5; i++) {
+          stay += (Number(arr[i]?.in) || 0) - (Number(arr[i]?.out) || 0);
+        }
+        stay += (Number(arr[6]?.in) || 0);
+        labels.push(date);
+        inTotals.push(inSum);
+        peaks.push(stay);
+      }
+    });
+    // 期間フィルタ
+    const start = document.getElementById('daily2-start').value;
+    const end = document.getElementById('daily2-end').value;
+    if (start) {
+      const idx = labels.findIndex(d => d >= start);
+      if (idx > 0) {
+        labels = labels.slice(idx);
+        inTotals = inTotals.slice(idx);
+        peaks = peaks.slice(idx);
+      }
+    }
+    if (end) {
+      const idx = labels.findIndex(d => d > end);
+      if (idx >= 0) {
+        labels = labels.slice(0, idx);
+        inTotals = inTotals.slice(0, idx);
+        peaks = peaks.slice(0, idx);
+      }
+    }
+    const ctx = document.getElementById('dailyPeakChart').getContext('2d');
+    if (window.dailyPeakChartObj) window.dailyPeakChartObj.destroy();
+    window.dailyPeakChartObj = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'IN合計', data: inTotals, borderColor: 'blue', fill: false },
+          { label: 'ピーク人数', data: peaks, borderColor: 'red', fill: false }
+        ]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+  });
+}
+
+// 5. データ修正・追加フォーム（そのまま）
+function loadEditTable() {
+  const date = document.getElementById('edit-date').value;
+  if (!date) return;
+  db.ref('entrance/' + date).get().then(snapshot => {
+    let arr = snapshot.exists() ? snapshot.val() : [];
+    let html = '';
+    for (let i = 0; i < timeSlots.length; i++) {
+      html += `<tr>
+        <td>${timeSlots[i]}</td>
+        <td><input type="number" name="in${i}" value="${arr[i]?.in ?? ''}" min="0" style="width:60px;"></td>
+        <td><input type="number" name="out${i}" value="${arr[i]?.out ?? ''}" min="0" style="width:60px;"></td>
+      </tr>`;
+    }
+    document.getElementById('editTableBody').innerHTML = html;
+    document.getElementById('editMsg').textContent = '';
+  });
+}
+
+function saveEditTable() {
+  const date = document.getElementById('edit-date').value;
+  if (!date) return;
+  const form = document.getElementById('editForm');
+  let arr = [];
+  for (let i = 0; i < timeSlots.length; i++) {
+    const inVal = Number(form[`in${i}`].value) || 0;
+    const outVal = Number(form[`out${i}`].value) || 0;
+    arr.push({ in: inVal, out: outVal });
+  }
+  db.ref('entrance/' + date).set(arr, err => {
+    if (err) {
+      document.getElementById('editMsg').textContent = '保存失敗';
+      document.getElementById('editMsg').style.color = 'red';
+    } else {
+      document.getElementById('editMsg').textContent = '保存しました';
+      document.getElementById('editMsg').style.color = 'green';
+    }
+  });
+}
+</script>
+</body>
+</html>
