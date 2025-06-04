@@ -199,13 +199,28 @@ function getNowTimeStr() {
   return `${hh}:${mm}`;
 }
 
+// ...existing code...
+
 function renderTable() {
   const tbody = document.getElementById('country-table-body');
   tbody.innerHTML = '';
-  countryData.forEach((row, idx) => {
+  // 日付フィルター
+  const selectedDate = document.getElementById('date-input').value;
+  // 指定日のみ＆新しい順
+  const filtered = countryData
+    .filter(row => row.date === selectedDate)
+    .sort((a, b) => {
+      // 時間がなければ後ろに
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      // 降順（新しい順）
+      return b.time.localeCompare(a.time);
+    });
+
+  filtered.forEach((row, idx) => {
     const c = countryList[row.countryIdx];
     if (editingIdx === idx) {
-      // 編集モード
+      // 編集モード（必要なら編集機能も修正）
       let regionOptions = regionList.map(r => `<option value="${r}"${r === c.region ? ' selected' : ''}>${r}</option>`).join('');
       let countryOptions = '';
       countryList.forEach((cc, i) => {
@@ -252,8 +267,8 @@ function renderTable() {
         <td>${c.flag} ${c.jp} (${c.en})</td>
         <td>${row.count}</td>
         <td>
-          <button class="edit-btn" onclick="startEdit(${idx})">編集</button>
-          <button onclick="deleteRow(${idx})">削除</button>
+          <button class="edit-btn" onclick="startEdit(${countryData.indexOf(row)})">編集</button>
+          <button onclick="deleteRow(${countryData.indexOf(row)})">削除</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -261,6 +276,7 @@ function renderTable() {
   });
 }
 
+// ...existing code...
 function addCountryRow() {
   const date = document.getElementById('date-input').value;
   const countryIdx = Number(document.getElementById('country-select').value);
