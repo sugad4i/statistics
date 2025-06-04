@@ -2,377 +2,90 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>国別来場者記録</title>
+  <title>統計ダッシュボード</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: 'Noto Sans JP', sans-serif; margin: 0; background: #fafafa; }
-    header { background: #eee; padding: 10px 20px; font-size: 20px; font-weight: bold; text-align: center; }
-    main { max-width: 700px; margin: 30px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; }
-    .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-    select, input[type="number"], input[type="date"] { font-size: 16px; padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc; }
-    button { background: #007bff; color: #fff; border: none; border-radius: 6px; padding: 6px 16px; font-size: 15px; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #f2f2f2; }
-    .flag { font-size: 20px; }
-    .edit-row select, .edit-row input[type="number"] { width: 110px; }
-    .edit-btn, .save-btn { margin: 0 2px; }
-    #export-result { margin-top: 20px; }
-    #export-text { width: 100%; font-size: 16px; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: linear-gradient(120deg, #e0e7ff 0%, #fff 100%);
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      background: #3b82f6;
+      color: #fff;
+      padding: 32px 20px 20px 20px;
+      font-size: 32px;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 2px;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+    }
+    main {
+      max-width: 520px;
+      margin: 48px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(59,130,246,0.10);
+      padding: 40px 30px 32px 30px;
+      text-align: center;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      margin: 28px 0;
+    }
+    a {
+      display: inline-block;
+      width: 100%;
+      max-width: 350px;
+      font-size: 22px;
+      font-weight: 500;
+      color: #2563eb;
+      background: linear-gradient(90deg, #e0e7ff 0%, #bae6fd 100%);
+      border-radius: 8px;
+      padding: 18px 0;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.07);
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      letter-spacing: 1px;
+    }
+    a:hover {
+      background: linear-gradient(90deg, #93c5fd 0%, #f0abfc 100%);
+      color: #1e293b;
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 6px 18px rgba(59,130,246,0.13);
+      text-decoration: none;
+    }
+    .desc {
+      color: #64748b;
+      font-size: 15px;
+      margin-bottom: 32px;
+      margin-top: 10px;
+      letter-spacing: 0.5px;
+    }
+    @media (max-width: 600px) {
+      main { padding: 18px 4vw; }
+      header { font-size: 22px; padding: 18px 5px 12px 5px; }
+      a { font-size: 17px; padding: 13px 0; }
+    }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body>
-  <header>国別来場者記録</header>
+  <header>統計ダッシュボード</header>
   <main>
-    <div class="input-row">
-      <label>日付: <input type="date" id="date-input" ></label>
-      <label>地域: 
-        <select id="region-select"></select>
-      </label>
-      <label>国: 
-        <select id="country-select"></select>
-      </label>
-      <label>人数: <input type="number" id="count-input" min="1" style="width:70px;"></label>
-      <button onclick="addCountryRow()">追加</button>
-      <button onclick="resetCountryData()" style="background:#dc3545;">リセット</button>
+    <div class="desc">
+      各種集計・記録ページへアクセスできます。
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>日付</th>
-          <th>時間</th>
-          <th>地域</th>
-          <th>国</th>
-          <th>人数</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="country-table-body"></tbody>
-    </table>
-    <div style="margin-top:20px;">
-      <button onclick="exportSummary()">出力</button>
-    </div>
-    <div id="export-result" style="margin-top:10px;">
-      <textarea id="export-text" rows="8" readonly></textarea>
-      <button onclick="copyExportText()" style="margin-top:5px;">コピー</button>
-    </div>
+    <ul>
+      <li><a href="https://sugad4i.github.io/statistics/entrance.html">エントランス集計グラフ</a></li>
+      <li><a href="https://sugad4i.github.io/statistics/casher.html">キャッシャー集計グラフ</a></li>
+      <li><a href="https://sugad4i.github.io/statistics/country.html">国別来場者記録</a></li>
+      <!-- 他のページもここに追加できます -->
+    </ul>
   </main>
-  <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDSZohtnPXem6m7f6A63KjXTQMUUFNk0Cg",
-  authDomain: "ghost-entrance.firebaseapp.com",
-  databaseURL: "https://ghost-entrance-default-rtdb.firebaseio.com",
-  projectId: "ghost-entrance",
-  storageBucket: "ghost-entrance.firebasestorage.app",
-  messagingSenderId: "977704976997",
-  appId: "1:977704976997:web:e61ef8bdc61babc2757c8c"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-const countryList = [
-  // アジア
-  {region:"アジア", flag:"🇰🇷", jp:"韓国", en:"South Korea"},
-  {region:"アジア", flag:"🇨🇳", jp:"中国", en:"China"},
-  {region:"アジア", flag:"🇹🇼", jp:"台湾", en:"Taiwan"},
-  {region:"アジア", flag:"🇭🇰", jp:"香港", en:"Hong Kong"},
-  {region:"アジア", flag:"🇹🇭", jp:"タイ", en:"Thailand"},
-  {region:"アジア", flag:"🇻🇳", jp:"ベトナム", en:"Vietnam"},
-  {region:"アジア", flag:"🇵🇭", jp:"フィリピン", en:"Philippines"},
-  {region:"アジア", flag:"🇮🇩", jp:"インドネシア", en:"Indonesia"},
-  {region:"アジア", flag:"🇲🇾", jp:"マレーシア", en:"Malaysia"},
-  {region:"アジア", flag:"🇸🇬", jp:"シンガポール", en:"Singapore"},
-  {region:"アジア", flag:"🇮🇳", jp:"インド", en:"India"},
-  {region:"アジア", flag:"🇵🇰", jp:"パキスタン", en:"Pakistan"},
-  {region:"アジア", flag:"🇳🇵", jp:"ネパール", en:"Nepal"},
-  {region:"アジア", flag:"🇱🇰", jp:"スリランカ", en:"Sri Lanka"},
-  {region:"アジア", flag:"🇲🇳", jp:"モンゴル", en:"Mongolia"},
-  {region:"アジア", flag:"🇧🇩", jp:"バングラデシュ", en:"Bangladesh"},
-  {region:"アジア", flag:"🇰🇭", jp:"カンボジア", en:"Cambodia"},
-  {region:"アジア", flag:"🇱🇦", jp:"ラオス", en:"Laos"},
-  {region:"アジア", flag:"🇧🇳", jp:"ブルネイ", en:"Brunei"},
-  {region:"アジア", flag:"🇹🇱", jp:"東ティモール", en:"Timor-Leste"},
-  // 欧州
-  {region:"欧州", flag:"🇬🇧", jp:"イギリス", en:"United Kingdom"},
-  {region:"欧州", flag:"🇫🇷", jp:"フランス", en:"France"},
-  {region:"欧州", flag:"🇩🇪", jp:"ドイツ", en:"Germany"},
-  {region:"欧州", flag:"🇮🇹", jp:"イタリア", en:"Italy"},
-  {region:"欧州", flag:"🇪🇸", jp:"スペイン", en:"Spain"},
-  {region:"欧州", flag:"🇳🇱", jp:"オランダ", en:"Netherlands"},
-  {region:"欧州", flag:"🇨🇭", jp:"スイス", en:"Switzerland"},
-  {region:"欧州", flag:"🇸🇪", jp:"スウェーデン", en:"Sweden"},
-  {region:"欧州", flag:"🇳🇴", jp:"ノルウェー", en:"Norway"},
-  {region:"欧州", flag:"🇫🇮", jp:"フィンランド", en:"Finland"},
-  {region:"欧州", flag:"🇩🇰", jp:"デンマーク", en:"Denmark"},
-  {region:"欧州", flag:"🇦🇹", jp:"オーストリア", en:"Austria"},
-  {region:"欧州", flag:"🇵🇱", jp:"ポーランド", en:"Poland"},
-  {region:"欧州", flag:"🇨🇿", jp:"チェコ", en:"Czech Republic"},
-  {region:"欧州", flag:"🇧🇪", jp:"ベルギー", en:"Belgium"},
-  // 北米
-  {region:"北米", flag:"🇺🇸", jp:"アメリカ", en:"United States"},
-  {region:"北米", flag:"🇨🇦", jp:"カナダ", en:"Canada"},
-  // 中南米
-  {region:"中南米", flag:"🇲🇽", jp:"メキシコ", en:"Mexico"},
-  {region:"中南米", flag:"🇧🇷", jp:"ブラジル", en:"Brazil"},
-  {region:"中南米", flag:"🇦🇷", jp:"アルゼンチン", en:"Argentina"},
-  {region:"中南米", flag:"🇨🇱", jp:"チリ", en:"Chile"},
-  {region:"中南米", flag:"🇵🇪", jp:"ペルー", en:"Peru"},
-  {region:"中南米", flag:"🇨🇴", jp:"コロンビア", en:"Colombia"},
-  // オセアニア
-  {region:"オセアニア", flag:"🇦🇺", jp:"オーストラリア", en:"Australia"},
-  {region:"オセアニア", flag:"🇳🇿", jp:"ニュージーランド", en:"New Zealand"},
-  // 中東・アフリカ
-  {region:"中東・アフリカ", flag:"🇹🇷", jp:"トルコ", en:"Turkey"},
-  {region:"中東・アフリカ", flag:"🇸🇦", jp:"サウジアラビア", en:"Saudi Arabia"},
-  {region:"中東・アフリカ", flag:"🇦🇪", jp:"アラブ首長国連邦", en:"United Arab Emirates"},
-  {region:"中東・アフリカ", flag:"🇿🇦", jp:"南アフリカ", en:"South Africa"},
-  {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
-];
-
-// 地域リストを生成
-const regionList = [...new Set(countryList.map(c => c.region))];
-const regionSelect = document.getElementById('region-select');
-regionList.forEach(region => {
-  const opt = document.createElement('option');
-  opt.value = region;
-  opt.textContent = region;
-  regionSelect.appendChild(opt);
-});
-
-// 国リストを地域で絞り込んで生成
-const countrySelect = document.getElementById('country-select');
-function updateCountryOptions(selectedIdx) {
-  const region = regionSelect.value;
-  countrySelect.innerHTML = '';
-  countryList.forEach((c, idx) => {
-    if (c.region === region) {
-      const opt = document.createElement('option');
-      opt.value = idx;
-      opt.textContent = `${c.flag} ${c.jp} (${c.en})`;
-      if (selectedIdx !== undefined && idx === selectedIdx) opt.selected = true;
-      countrySelect.appendChild(opt);
-    }
-  });
-}
-regionSelect.onchange = () => updateCountryOptions();
-updateCountryOptions();
-
-// 日付自動入力（22:00～翌4:59は前日をセット）
-function getEigyoDate(dateObj = new Date()) {
-  const hour = dateObj.getHours();
-  if (hour >= 22 || hour < 19) {
-    dateObj.setDate(dateObj.getDate() - 1);
-  }
-  const yyyy = dateObj.getFullYear();
-  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const dd = String(dateObj.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-document.getElementById('date-input').value = getEigyoDate();
-
-// データ保存用
-let countryData = [];
-let editingIdx = null;
-
-// Firebaseからデータ取得
-function loadCountryData() {
-  db.ref('country').get().then(snapshot => {
-    countryData = [];
-    if (snapshot.exists()) {
-      const obj = snapshot.val();
-      Object.keys(obj).forEach(key => {
-        countryData.push({ ...obj[key], key });
-      });
-    }
-    renderTable();
-  });
-}
-
-// 時刻を「hh:mm」形式で取得
-function getNowTimeStr() {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
-}
-
-// ...existing code...
-
-function renderTable() {
-  const tbody = document.getElementById('country-table-body');
-  tbody.innerHTML = '';
-  // 日付フィルター
-  const selectedDate = document.getElementById('date-input').value;
-  // 指定日のみ＆新しい順
-  const filtered = countryData
-    .filter(row => row.date === selectedDate)
-    .sort((a, b) => {
-      // 時間がなければ後ろに
-      if (!a.time) return 1;
-      if (!b.time) return -1;
-      // 降順（新しい順）
-      return b.time.localeCompare(a.time);
-    });
-
-  filtered.forEach((row, idx) => {
-    const c = countryList[row.countryIdx];
-    if (editingIdx === idx) {
-      // 編集モード（必要なら編集機能も修正）
-      let regionOptions = regionList.map(r => `<option value="${r}"${r === c.region ? ' selected' : ''}>${r}</option>`).join('');
-      let countryOptions = '';
-      countryList.forEach((cc, i) => {
-        if (cc.region === c.region) {
-          countryOptions += `<option value="${i}"${i === row.countryIdx ? ' selected' : ''}>${cc.flag} ${cc.jp} (${cc.en})</option>`;
-        }
-      });
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><input type="date" value="${row.date}" id="edit-date-${idx}" style="width:120px;"></td>
-        <td>${row.time || ''}</td>
-        <td>
-          <select id="edit-region-${idx}" style="width:110px;">${regionOptions}</select>
-        </td>
-        <td>
-          <select id="edit-country-${idx}" style="width:180px;">${countryOptions}</select>
-        </td>
-        <td><input type="number" id="edit-count-${idx}" value="${row.count}" min="1" style="width:70px;"></td>
-        <td>
-          <button class="save-btn" onclick="saveEditRow(${idx})">保存</button>
-          <button class="edit-btn" onclick="cancelEdit()">キャンセル</button>
-        </td>
-      `;
-      setTimeout(() => {
-        document.getElementById(`edit-region-${idx}`).onchange = function() {
-          const region = this.value;
-          let countryOptions = '';
-          countryList.forEach((cc, i) => {
-            if (cc.region === region) {
-              countryOptions += `<option value="${i}">${cc.flag} ${cc.jp} (${cc.en})</option>`;
-            }
-          });
-          document.getElementById(`edit-country-${idx}`).innerHTML = countryOptions;
-        };
-      }, 0);
-      tbody.appendChild(tr);
-    } else {
-      // 通常表示
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${row.date}</td>
-        <td>${row.time || ''}</td>
-        <td>${c.region}</td>
-        <td>${c.flag} ${c.jp} (${c.en})</td>
-        <td>${row.count}</td>
-        <td>
-          <button class="edit-btn" onclick="startEdit(${countryData.indexOf(row)})">編集</button>
-          <button onclick="deleteRow(${countryData.indexOf(row)})">削除</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    }
-  });
-}
-
-// ...existing code...
-function addCountryRow() {
-  const date = document.getElementById('date-input').value;
-  const countryIdx = Number(document.getElementById('country-select').value);
-  const count = Number(document.getElementById('count-input').value);
-  if (!date || isNaN(countryIdx) || !count || count < 1) {
-    alert('日付・地域・国・人数を正しく入力してください');
-    return;
-  }
-  const time = getNowTimeStr();
-  db.ref('country').push({ date, countryIdx, count, time }).then(() => {
-    document.getElementById('count-input').value = '';
-    loadCountryData();
-  });
-}
-
-function startEdit(idx) {
-  editingIdx = idx;
-  renderTable();
-}
-
-function cancelEdit() {
-  editingIdx = null;
-  renderTable();
-}
-
-function saveEditRow(idx) {
-  const row = countryData[idx];
-  const date = document.getElementById(`edit-date-${idx}`).value;
-  const region = document.getElementById(`edit-region-${idx}`).value;
-  const countryIdx = Number(document.getElementById(`edit-country-${idx}`).value);
-  const count = Number(document.getElementById(`edit-count-${idx}`).value);
-  if (!date || isNaN(countryIdx) || !count || count < 1) {
-    alert('日付・地域・国・人数を正しく入力してください');
-    renderTable();
-    return;
-  }
-  db.ref('country/' + row.key).set({
-    date, countryIdx, count, time: row.time
-  }).then(() => {
-    editingIdx = null;
-    loadCountryData();
-  });
-}
-
-function deleteRow(idx) {
-  if (!confirm('この行を削除しますか？')) return;
-  const row = countryData[idx];
-  db.ref('country/' + row.key).remove().then(() => {
-    loadCountryData();
-  });
-}
-
-function resetCountryData() {
-  if (!confirm('全データをリセットしますか？')) return;
-  db.ref('country').remove().then(() => {
-    loadCountryData();
-  });
-}
-
-// exportSummary関数（countryDataを使う）
-function exportSummary() {
-  const selectedDate = document.getElementById('date-input').value;
-  if (!countryData.length || !selectedDate) {
-    document.getElementById('export-text').value = 'データがありません';
-    return;
-  }
-  const filtered = countryData.filter(row => row.date === selectedDate);
-  if (!filtered.length) {
-    document.getElementById('export-text').value = '該当日のデータがありません';
-    return;
-  }
-  // 国ごとに集計
-  const countryMap = {};
-  filtered.forEach(row => {
-    const c = countryList[row.countryIdx];
-    const key = `${c.flag} ${c.jp} (${c.en})`;
-    if (!countryMap[key]) countryMap[key] = 0;
-    countryMap[key] += Number(row.count);
-  });
-  // 多い順に並び替え
-  const sorted = Object.entries(countryMap).sort((a, b) => b[1] - a[1]);
-  let text = `日時　調査人数\n${selectedDate}　${filtered.reduce((sum, row) => sum + Number(row.count), 0)}人\n\n国ごとの人数\n`;
-  sorted.forEach(([name, count]) => {
-    text += `${name}：${count}人\n`;
-  });
-  document.getElementById('export-text').value = text.trim();
-}
-function copyExportText() {
-  const textarea = document.getElementById('export-text');
-  textarea.select();
-  document.execCommand('copy');
-  alert('コピーしました');
-}
-
-// 初期表示
-loadCountryData();
-  </script>
 </body>
 </html>
