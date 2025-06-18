@@ -313,7 +313,7 @@ function exportSummary() {
   // 多い順に並び替え
   const sorted = Object.entries(countryMap).sort((a, b) => b[1] - a[1]);
   const total = filtered.reduce((sum, row) => sum + Number(row.count), 0);
-  let text = `日時　調査人数\n${selectedDate}　${total}人\n\n国ごとの人数\n`;
+  let text = `${selectedDate}　${total}人\n\n国ごとの人数\n`;
   sorted.forEach(([name, count]) => {
     const percent = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
     text += `${name}：${count}人 (${percent}%)\n`;
