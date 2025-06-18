@@ -15,9 +15,13 @@
     .highlight { background: #fef9c3; }
     .desc { color: #64748b; font-size: 15px; margin-bottom: 18px; }
     #reload-btn { margin-bottom: 18px; }
+    .chart-area { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; margin: 30px 0; }
+    .chart-area > div { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px; }
+    .chart-area h3 { text-align: center; margin: 0 0 10px 0; font-size: 16px; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="apple-touch-icon" href="country-statics-thumb.png">
   <link rel="icon" type="image/png" sizes="192x192" href="country-statics-thumb.png">
   <link rel="manifest" href="manifest-country-statics.json">
@@ -30,6 +34,19 @@
       <br>
       <span>country.htmlで記録した全データの累計・日別・国別ランキングなどを表示します。</span>
     </div>
+
+    <!-- 円グラフエリア追加 -->
+    <div class="chart-area">
+      <div>
+        <h3>地域別 円グラフ</h3>
+        <canvas id="regionPieChart" width="300" height="300"></canvas>
+      </div>
+      <div>
+        <h3>国別ランキング 円グラフ</h3>
+        <canvas id="countryPieChart" width="300" height="300"></canvas>
+      </div>
+    </div>
+
     <h2>累計ランキング</h2>
     <table class="stat-table" id="total-table">
       <thead>
@@ -138,6 +155,8 @@ const countryList = [
   {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
 ];
 
+let regionPieChart, countryPieChart;
+
 function loadStatics() {
   db.ref('country').get().then(snapshot => {
     if (!snapshot.exists()) return;
@@ -147,15 +166,80 @@ function loadStatics() {
       allData.push({ ...obj[key], key });
     });
 
-    // 累計ランキング
+    // 円グラフ用データ集計
+    // 地域別
+    const regionMap = {};
+    allData.forEach(row => {
+      const c = countryList[row.countryIdx];
+      const region = c && c.region ? c.region : 'その他';
+      if (!regionMap[region]) regionMap[region] = 0;
+      regionMap[region] += Number(row.count);
+    });
+    const regionLabels = Object.keys(regionMap);
+    const regionData = Object.values(regionMap);
+
+    // 国別ランキング
     const countryMap = {};
     allData.forEach(row => {
       const c = countryList[row.countryIdx];
-      const key = `${c.flag} ${c.jp} (${c.en})`;
+      const key = c ? `${c.flag} ${c.jp}` : '不明';
       if (!countryMap[key]) countryMap[key] = 0;
       countryMap[key] += Number(row.count);
     });
-    const sorted = Object.entries(countryMap).sort((a, b) => b[1] - a[1]);
+    const sortedCountries = Object.entries(countryMap).sort((a, b) => b[1] - a[1]);
+    const countryLabels = sortedCountries.map(([name]) => name);
+    const countryDataArr = sortedCountries.map(([, count]) => count);
+
+    // 地域別円グラフ
+    if (regionPieChart) regionPieChart.destroy();
+    regionPieChart = new Chart(document.getElementById('regionPieChart'), {
+      type: 'pie',
+      data: {
+        labels: regionLabels,
+        datasets: [{
+          data: regionData,
+          backgroundColor: [
+            '#60a5fa', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#f472b6', '#facc15', '#38bdf8'
+          ],
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+
+    // 国別ランキング円グラフ
+    if (countryPieChart) countryPieChart.destroy();
+    countryPieChart = new Chart(document.getElementById('countryPieChart'), {
+      type: 'pie',
+      data: {
+        labels: countryLabels,
+        datasets: [{
+          data: countryDataArr,
+          backgroundColor: [
+            '#60a5fa', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#f472b6', '#facc15', '#38bdf8',
+            '#818cf8', '#fb7185', '#bef264', '#fdba74', '#fcd34d', '#a3e635', '#fca5a5', '#c4b5fd'
+          ],
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+
+    // 累計ランキング
+    const countryMap2 = {};
+    allData.forEach(row => {
+      const c = countryList[row.countryIdx];
+      const key = `${c.flag} ${c.jp} (${c.en})`;
+      if (!countryMap2[key]) countryMap2[key] = 0;
+      countryMap2[key] += Number(row.count);
+    });
+    const sorted = Object.entries(countryMap2).sort((a, b) => b[1] - a[1]);
     const totalTbody = document.querySelector('#total-table tbody');
     totalTbody.innerHTML = '';
     sorted.forEach(([name, count], i) => {
@@ -203,5 +287,3 @@ function loadStatics() {
 // 初期表示
 loadStatics();
   </script>
-</body>
-</html>
