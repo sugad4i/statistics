@@ -318,12 +318,15 @@ function exportSummary() {
   });
   // 多い順に並び替え
   const sorted = Object.entries(countryMap).sort((a, b) => b[1] - a[1]);
-  let text = `日時　調査人数\n${selectedDate}　${filtered.reduce((sum, row) => sum + Number(row.count), 0)}人\n\n国ごとの人数\n`;
+  const total = filtered.reduce((sum, row) => sum + Number(row.count), 0);
+  let text = `日時　調査人数\n${selectedDate}　${total}人\n\n国ごとの人数\n`;
   sorted.forEach(([name, count]) => {
-    text += `${name}：${count}人\n`;
+    const percent = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+    text += `${name}：${count}人 (${percent}%)\n`;
   });
   document.getElementById('export-text').value = text.trim();
 }
+// ...existing code...
 function copyExportText() {
   const textarea = document.getElementById('export-text');
   textarea.select();
