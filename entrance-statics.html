@@ -71,6 +71,7 @@
     <h2>曜日ごとのIN人数推移</h2>
     <div class="graph-area">
       <div class="weekday-btns">
+        <button id="btn-wed" onclick="showWeekdayTrendLine(3)">水</button>
         <button id="btn-thu" onclick="showWeekdayTrendLine(4)">木</button>
         <button id="btn-fri" onclick="showWeekdayTrendLine(5)">金</button>
         <button id="btn-sat" onclick="showWeekdayTrendLine(6)">土</button>
@@ -174,8 +175,8 @@
       db.ref('entrance').get().then(snapshot => {
         if (!snapshot.exists()) return;
         const allData = snapshot.val();
-        // 木:4, 金:5, 土:6, 日:0
-        const targetDays = [4, 5, 6, 0];
+        // 水:3, 木:4, 金:5, 土:6, 日:0
+        const targetDays = [3, 4, 5, 6, 0];
         const weekdayStats = [[],[],[],[],[],[],[]];
         const peakStats = [[],[],[],[],[],[],[]];
         Object.keys(allData).forEach(date => {
@@ -193,8 +194,8 @@
             peakStats[wd].push(stay);
           }
         });
-        // 木金土日だけ抽出
-        const labels = ['木','金','土','日'];
+        // 水木金土日だけ抽出
+        const labels = ['水','木','金','土','日'];
         const inAverages = targetDays.map(idx => weekdayStats[idx].length ? weekdayStats[idx].reduce((a,b)=>a+b,0)/weekdayStats[idx].length : 0);
         const peakAverages = targetDays.map(idx => peakStats[idx].length ? peakStats[idx].reduce((a,b)=>a+b,0)/peakStats[idx].length : 0);
         const ctx = document.getElementById('weekdayChart').getContext('2d');
@@ -216,11 +217,11 @@
       });
     }
 
-    // 曜日ごとのIN人数推移（木金土日ボタンで切替）
+    // 曜日ごとのIN人数推移（水木金土日ボタンで切替）
     function showWeekdayTrendLine(weekday) {
       // ボタンのactive切替
-      ['btn-thu','btn-fri','btn-sat','btn-sun'].forEach((id, idx) => {
-        document.getElementById(id).classList.toggle('active', [4,5,6,0][idx] === weekday);
+      ['btn-wed','btn-thu','btn-fri','btn-sat','btn-sun'].forEach((id, idx) => {
+        document.getElementById(id).classList.toggle('active', [3,4,5,6,0][idx] === weekday);
       });
       db.ref('entrance').get().then(snapshot => {
         if (!snapshot.exists()) return;
