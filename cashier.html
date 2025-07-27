@@ -455,7 +455,7 @@ Door                :    ${door}
   Object.keys(shop).forEach(s=>{
     const id = `fi_${btoa(unescape(encodeURIComponent(s)))}`;
     h += `${s}
-  <span id="tot_${id}">${shop[s].guest+shop[s].free}</span>(ゲスト${shop[s].free} フリー <input type="number" id="${id}" value="0">)
+  <span id="tot_${id}">${shop[s].guest+shop[s].free}</span>(ゲスト${shop[s].guest} フリー <input type="number" id="${id}" value="0">)
 `;
   });
 
