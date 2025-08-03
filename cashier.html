@@ -536,7 +536,7 @@ Door                :    ${door}
 【店舗ゲスト/フリー】
 `;
   Object.keys(shop).forEach(s=>{
-    const g=shop[s].free;
+    const g=shop[s].guest;
     const f=shop[s].freeInp;
     txt += `${s}
   ${g+f}(ゲスト${shop[s].guest} フリー ${shop[s].freeInp})
