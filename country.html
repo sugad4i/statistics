@@ -5,21 +5,94 @@
   <title>国別来場者記録</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: 'Noto Sans JP', sans-serif; margin: 0; background: #fafafa; }
-    header { background: #eee; padding: 10px 20px; font-size: 20px; font-weight: bold; text-align: center; }
-    main { max-width: 700px; margin: 30px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; }
-    .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-    select, input[type="number"], input[type="date"] { font-size: 16px; padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc; }
-    button { background: #007bff; color: #fff; border: none; border-radius: 6px; padding: 6px 16px; font-size: 15px; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #f2f2f2; }
-    .flag { font-size: 20px; }
-    .edit-row select, .edit-row input[type="number"] { width: 110px; }
-    .edit-btn, .save-btn { margin: 0 2px; }
-    #export-result { margin-top: 20px; }
-    #export-text { width: 100%; font-size: 16px; }
+    body { font-family: 'Noto Sans JP', sans-serif; background: #f4f8fb; margin: 0; }
+    header { background: #3b82f6; color: #fff; padding: 24px 0; font-size: 26px; font-weight: bold; text-align: center; }
+    main { max-width: 800px; margin: 30px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(59,130,246,0.08); padding: 30px 20px; }
+    h2 { color: #2563eb; margin-top: 30px; }
+    .input-row { margin: 24px 0 18px 0; display: flex; gap: 24px; align-items: center; }
+    .input-row label { font-size: 16px; }
+    #country-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+      justify-content: center;
+    }
+    .country-btn {
+      width: 160px;
+      height: 80px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 16px;
+      margin-bottom: 8px;
+      border: none;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.10);
+      background: linear-gradient(135deg, #e0e7ff 60%, #fff 100%);
+      position: relative;
+      transition: 0.15s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .country-btn.selected {
+      background: linear-gradient(135deg, #60a5fa 60%, #fff 100%);
+      color: #fff;
+      border: 2.5px solid #2563eb;
+    }
+    .country-flag-bg {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 4px;
+    }
+    .country-btn .count {
+      position: absolute;
+      top: 8px;
+      right: 14px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 15px;
+      border-radius: 10px;
+      padding: 2px 10px;
+      font-weight: bold;
+    }
+    #confirm-btn {
+      font-size: 22px;
+      padding: 16px 40px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.10);
+      cursor: pointer;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      transition: 0.1s;
+    }
+    #confirm-btn:hover {
+      background: #1d4ed8;
+    }
+    .stat-table { width: 100%; border-collapse: collapse; margin: 18px 0 30px 0; }
+    .stat-table th, .stat-table td { border: 1px solid #ccc; padding: 8px 10px; text-align: center; }
+    .stat-table th { background: #e0e7ff; }
+    .highlight { background: #fef9c3; }
+    .desc { color: #64748b; font-size: 15px; margin-bottom: 18px; }
+    .msg { color: #2563eb; margin-left: 10px; }
+    @media (max-width: 700px) {
+      main { padding: 10px 2vw; }
+      .input-row { flex-direction: column; gap: 10px; }
+      #country-panel { gap: 8px; }
+      .country-btn { width: 100%; height: 60px; font-size: 17px; }
+    }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -30,23 +103,24 @@
 <body>
   <header>国別来場者記録</header>
   <main>
-    <div class="input-row">
-      <label>日付: <input type="date" id="date-input" ></label>
-      <label>地域: 
-        <select id="region-select"></select>
-      </label>
-      <label>国: 
-        <select id="country-select"></select>
-      </label>
-      <label>人数: <input type="number" id="count-input" min="1" style="width:70px;"></label>
-      <button onclick="addCountryRow()">追加</button>
+    <div class="desc">
+      各国の来場者数をパネルで選択して記録できます。<br>
+      日付を入力し、国パネルを人数分押して「確定」ボタンを押してください。
     </div>
-    <table>
+    <div class="input-row">
+      <label>日付: <input type="date" id="date-input"></label>
+    </div>
+    <div id="country-panel"></div>
+    <div style="margin-bottom:24px; text-align:center;">
+      <button id="confirm-btn" onclick="confirmPanel()">確定</button>
+      <span id="msg" class="msg"></span>
+    </div>
+    <h2>本日の記録</h2>
+    <table class="stat-table">
       <thead>
         <tr>
           <th>日付</th>
           <th>時間</th>
-          <th>地域</th>
           <th>国</th>
           <th>人数</th>
           <th>操作</th>
@@ -54,13 +128,6 @@
       </thead>
       <tbody id="country-table-body"></tbody>
     </table>
-    <div style="margin-top:20px;">
-      <button onclick="exportSummary()">出力</button>
-    </div>
-    <div id="export-result" style="margin-top:10px;">
-      <textarea id="export-text" rows="8" readonly></textarea>
-      <button onclick="copyExportText()" style="margin-top:5px;">コピー</button>
-    </div>
   </main>
   <script>
 const firebaseConfig = {
@@ -75,156 +142,141 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const countryList = [
-  // アジア
-  {region:"アジア", flag:"🇰🇷", jp:"韓国", en:"South Korea"},
-  {region:"アジア", flag:"🇨🇳", jp:"中国", en:"China"},
-  {region:"アジア", flag:"🇹🇼", jp:"台湾", en:"Taiwan"},
-  {region:"アジア", flag:"🇭🇰", jp:"香港", en:"Hong Kong"},
-  {region:"アジア", flag:"🇹🇭", jp:"タイ", en:"Thailand"},
-  {region:"アジア", flag:"🇻🇳", jp:"ベトナム", en:"Vietnam"},
-  {region:"アジア", flag:"🇵🇭", jp:"フィリピン", en:"Philippines"},
-  {region:"アジア", flag:"🇮🇩", jp:"インドネシア", en:"Indonesia"},
-  {region:"アジア", flag:"🇲🇾", jp:"マレーシア", en:"Malaysia"},
-  {region:"アジア", flag:"🇸🇬", jp:"シンガポール", en:"Singapore"},
-  {region:"アジア", flag:"🇮🇳", jp:"インド", en:"India"},
-  {region:"アジア", flag:"🇵🇰", jp:"パキスタン", en:"Pakistan"},
-  {region:"アジア", flag:"🇳🇵", jp:"ネパール", en:"Nepal"},
-  {region:"アジア", flag:"🇱🇰", jp:"スリランカ", en:"Sri Lanka"},
-  {region:"アジア", flag:"🇲🇳", jp:"モンゴル", en:"Mongolia"},
-  {region:"アジア", flag:"🇧🇩", jp:"バングラデシュ", en:"Bangladesh"},
-  {region:"アジア", flag:"🇰🇭", jp:"カンボジア", en:"Cambodia"},
-  {region:"アジア", flag:"🇱🇦", jp:"ラオス", en:"Laos"},
-  {region:"アジア", flag:"🇧🇳", jp:"ブルネイ", en:"Brunei"},
-  {region:"アジア", flag:"🇹🇱", jp:"東ティモール", en:"Timor-Leste"},
-  // 欧州
-  {region:"欧州", flag:"🇬🇧", jp:"イギリス", en:"United Kingdom"},
-  {region:"欧州", flag:"🇫🇷", jp:"フランス", en:"France"},
-  {region:"欧州", flag:"🇩🇪", jp:"ドイツ", en:"Germany"},
-  {region:"欧州", flag:"🇮🇹", jp:"イタリア", en:"Italy"},
-  {region:"欧州", flag:"🇪🇸", jp:"スペイン", en:"Spain"},
-  {region:"欧州", flag:"🇳🇱", jp:"オランダ", en:"Netherlands"},
-  {region:"欧州", flag:"🇨🇭", jp:"スイス", en:"Switzerland"},
-  {region:"欧州", flag:"🇸🇪", jp:"スウェーデン", en:"Sweden"},
-  {region:"欧州", flag:"🇳🇴", jp:"ノルウェー", en:"Norway"},
-  {region:"欧州", flag:"🇫🇮", jp:"フィンランド", en:"Finland"},
-  {region:"欧州", flag:"🇩🇰", jp:"デンマーク", en:"Denmark"},
-  {region:"欧州", flag:"🇦🇹", jp:"オーストリア", en:"Austria"},
-  {region:"欧州", flag:"🇵🇱", jp:"ポーランド", en:"Poland"},
-  {region:"欧州", flag:"🇨🇿", jp:"チェコ", en:"Czech Republic"},
-  {region:"欧州", flag:"🇧🇪", jp:"ベルギー", en:"Belgium"},
-  // 北米
-  {region:"北米", flag:"🇺🇸", jp:"アメリカ", en:"United States"},
-  {region:"北米", flag:"🇨🇦", jp:"カナダ", en:"Canada"},
-  // 中南米
-  {region:"中南米", flag:"🇲🇽", jp:"メキシコ", en:"Mexico"},
-  {region:"中南米", flag:"🇧🇷", jp:"ブラジル", en:"Brazil"},
-  {region:"中南米", flag:"🇦🇷", jp:"アルゼンチン", en:"Argentina"},
-  {region:"中南米", flag:"🇨🇱", jp:"チリ", en:"Chile"},
-  {region:"中南米", flag:"🇵🇪", jp:"ペルー", en:"Peru"},
-  {region:"中南米", flag:"🇨🇴", jp:"コロンビア", en:"Colombia"},
-  // オセアニア
-  {region:"オセアニア", flag:"🇦🇺", jp:"オーストラリア", en:"Australia"},
-  {region:"オセアニア", flag:"🇳🇿", jp:"ニュージーランド", en:"New Zealand"},
-  // 中東・アフリカ
-  {region:"中東・アフリカ", flag:"🇹🇷", jp:"トルコ", en:"Turkey"},
-  {region:"中東・アフリカ", flag:"🇸🇦", jp:"サウジアラビア", en:"Saudi Arabia"},
-  {region:"中東・アフリカ", flag:"🇦🇪", jp:"アラブ首長国連邦", en:"United Arab Emirates"},
-  {region:"中東・アフリカ", flag:"🇿🇦", jp:"南アフリカ", en:"South Africa"},
-  {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
+// 上位25カ国＋代表的な先進国
+const topCountryList = [
+  {flag:"🇺🇸", jp:"アメリカ", en:"United States"},
+  {flag:"🇨🇳", jp:"中国", en:"China"},
+  {flag:"🇰🇷", jp:"韓国", en:"South Korea"},
+  {flag:"🇫🇷", jp:"フランス", en:"France"},
+  {flag:"🇬🇧", jp:"イギリス", en:"United Kingdom"},
+  {flag:"🇦🇺", jp:"オーストラリア", en:"Australia"},
+  {flag:"🇨🇦", jp:"カナダ", en:"Canada"},
+  {flag:"🇹🇭", jp:"タイ", en:"Thailand"},
+  {flag:"🇳🇱", jp:"オランダ", en:"Netherlands"},
+  {flag:"🇮🇹", jp:"イタリア", en:"Italy"},
+  {flag:"🇩🇪", jp:"ドイツ", en:"Germany"},
+  {flag:"🇮🇳", jp:"インド", en:"India"},
+  {flag:"🇸🇪", jp:"スウェーデン", en:"Sweden"},
+  {flag:"🇹🇷", jp:"トルコ", en:"Turkey"},
+  {flag:"🇵🇭", jp:"フィリピン", en:"Philippines"},
+  {flag:"🇲🇾", jp:"マレーシア", en:"Malaysia"},
+  {flag:"🇳🇿", jp:"ニュージーランド", en:"New Zealand"},
+  {flag:"🇲🇽", jp:"メキシコ", en:"Mexico"},
+  {flag:"🇸🇦", jp:"サウジアラビア", en:"Saudi Arabia"},
+  {flag:"🇦🇪", jp:"アラブ首長国連邦", en:"United Arab Emirates"},
+  {flag:"🇨🇭", jp:"スイス", en:"Switzerland"},
+  {flag:"🇳🇴", jp:"ノルウェー", en:"Norway"},
+  {flag:"🇸🇬", jp:"シンガポール", en:"Singapore"},
+  {flag:"🇭🇰", jp:"香港", en:"Hong Kong"},
+  {flag:"🇹🇼", jp:"台湾", en:"Taiwan"},
+  // 代表的な先進国（重複除外）
+  {flag:"🇪🇸", jp:"スペイン", en:"Spain"},
+  {flag:"🇩🇰", jp:"デンマーク", en:"Denmark"},
+  {flag:"🇦🇹", jp:"オーストリア", en:"Austria"},
+  {flag:"🇧🇪", jp:"ベルギー", en:"Belgium"},
+  {flag:"🇫🇮", jp:"フィンランド", en:"Finland"},
+  {flag:"🇨🇿", jp:"チェコ", en:"Czech Republic"},
+  {flag:"🇵🇱", jp:"ポーランド", en:"Poland"},
+  {flag:"🇧🇷", jp:"ブラジル", en:"Brazil"},
+  {flag:"🇦🇷", jp:"アルゼンチン", en:"Argentina"},
+  {flag:"🇨🇱", jp:"チリ", en:"Chile"},
+  {flag:"🇵🇪", jp:"ペルー", en:"Peru"},
+  {flag:"🇨🇴", jp:"コロンビア", en:"Colombia"},
+  {flag:"🇿🇦", jp:"南アフリカ", en:"South Africa"},
+  {flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
 ];
 
-// 地域リストを生成
-const regionList = [...new Set(countryList.map(c => c.region))];
-const regionSelect = document.getElementById('region-select');
-regionList.forEach(region => {
-  const opt = document.createElement('option');
-  opt.value = region;
-  opt.textContent = region;
-  regionSelect.appendChild(opt);
-});
+let panelCounts = Array(topCountryList.length).fill(0);
+let countryData = [];
 
-// 国リストを地域で絞り込んで生成
-const countrySelect = document.getElementById('country-select');
-function updateCountryOptions(selectedIdx) {
-  const region = regionSelect.value;
-  countrySelect.innerHTML = '';
-  countryList.forEach((c, idx) => {
-    if (c.region === region) {
-      const opt = document.createElement('option');
-      opt.value = idx;
-      opt.textContent = `${c.flag} ${c.jp} (${c.en})`;
-      if (selectedIdx !== undefined && idx === selectedIdx) opt.selected = true;
-      countrySelect.appendChild(opt);
-    }
+// 国パネル生成（均等な長方形・複数回押し対応・デザイン強化）
+function renderCountryPanel() {
+  const panel = document.getElementById('country-panel');
+  panel.innerHTML = '';
+  topCountryList.forEach((c, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'country-btn' + (panelCounts[idx] ? ' selected' : '');
+    btn.innerHTML = `
+      <span class="country-flag-bg">${c.flag}</span>
+      <span>${c.jp}</span>
+      ${panelCounts[idx] ? `<span class="count">×${panelCounts[idx]}</span>` : ''}
+    `;
+    btn.onclick = () => {
+      panelCounts[idx]++;
+      renderCountryPanel();
+    };
+    panel.appendChild(btn);
   });
 }
-regionSelect.onchange = () => updateCountryOptions();
-updateCountryOptions();
+renderCountryPanel();
 
-document.getElementById('date-input').addEventListener('change', renderTable);
-
-// 日付自動入力（22:00～翌19:59は前日をセット）
-function getEigyoDate(dateObj = new Date()) {
-  const hour = dateObj.getHours();
-  if (hour >= 22 || hour < 19) {
-    dateObj.setDate(dateObj.getDate() - 1);
-  }
-  const yyyy = dateObj.getFullYear();
-  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const dd = String(dateObj.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+// 現在時刻（hh:mm）取得
+function getNowTimeStr() {
+  const d = new Date();
+  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
-document.getElementById('date-input').value = getEigyoDate();
 
-// データ保存用
-let countryData = [];
-let editingIdx = null;
-
-// Firebaseからデータ取得
-function loadCountryData() {
-  db.ref('country').get().then(snapshot => {
-    countryData = [];
-    if (snapshot.exists()) {
-      const obj = snapshot.val();
-      Object.keys(obj).forEach(key => {
-        countryData.push({ ...obj[key], key });
+// 確定ボタンでまとめて登録
+function confirmPanel() {
+  const date = document.getElementById('date-input').value;
+  if (!date) {
+    document.getElementById('msg').textContent = '日付を入力してください';
+    return;
+  }
+  let any = false;
+  panelCounts.forEach((count, idx) => {
+    if (count > 0) {
+      any = true;
+      const time = getNowTimeStr();
+      db.ref('country').push({
+        date,
+        countryIdx: idx,
+        count,
+        time
       });
     }
+  });
+  if (!any) {
+    document.getElementById('msg').textContent = '国を選択してください';
+    return;
+  }
+  panelCounts = Array(topCountryList.length).fill(0);
+  renderCountryPanel();
+  document.getElementById('msg').textContent = '記録しました';
+  loadCountryData();
+}
+
+// データ取得・テーブル表示
+function loadCountryData() {
+  db.ref('country').get().then(snapshot => {
+    if (!snapshot.exists()) return;
+    countryData = [];
+    const obj = snapshot.val();
+    Object.keys(obj).forEach(key => {
+      countryData.push({ ...obj[key], key });
+    });
     renderTable();
   });
 }
 
-// 時刻を「hh:mm」形式で取得
-function getNowTimeStr() {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
-}
-
-// ...existing code...
-
+// テーブル描画
 function renderTable() {
   const tbody = document.getElementById('country-table-body');
   tbody.innerHTML = '';
-  // 日付フィルター
   const selectedDate = document.getElementById('date-input').value;
-  // countryDataの配列順（新しい入力が上）でフィルタ
   const filtered = countryData
-    .map((row, idx) => ({ ...row, _originalIdx: idx })) // 元のインデックスを保持
+    .map((row, idx) => ({ ...row, _originalIdx: idx }))
     .filter(row => row.date === selectedDate)
-    .reverse(); // 配列の末尾が新しいのでreverseで新しい順に
+    .reverse();
 
   filtered.forEach((row) => {
-    const c = countryList[row.countryIdx];
-    // 編集ボタンを削除
+    const c = topCountryList[row.countryIdx];
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.date}</td>
       <td>${row.time || ''}</td>
-      <td>${c.region}</td>
-      <td>${c.flag} ${c.jp} (${c.en})</td>
+      <td>${c ? `${c.flag} ${c.jp} (${c.en})` : '不明'}</td>
       <td>${row.count}</td>
       <td>
         <button onclick="deleteRow(${row._originalIdx})">削除</button>
@@ -234,99 +286,17 @@ function renderTable() {
   });
 }
 
-// ...existing code...
-
-function addCountryRow() {
-  const date = document.getElementById('date-input').value;
-  const countryIdx = Number(document.getElementById('country-select').value);
-  const count = Number(document.getElementById('count-input').value);
-  if (!date || isNaN(countryIdx) || !count || count < 1) {
-    alert('日付・地域・国・人数を正しく入力してください');
-    return;
-  }
-  const time = getNowTimeStr();
-  db.ref('country').push({ date, countryIdx, count, time }).then(() => {
-    document.getElementById('count-input').value = '';
-    loadCountryData();
-  });
-}
-
-function startEdit(idx) {
-  editingIdx = idx;
-  renderTable();
-}
-
-function cancelEdit() {
-  editingIdx = null;
-  renderTable();
-}
-
-function saveEditRow(idx) {
-  const row = countryData[idx];
-  const date = document.getElementById(`edit-date-${idx}`).value;
-  const region = document.getElementById(`edit-region-${idx}`).value;
-  const countryIdx = Number(document.getElementById(`edit-country-${idx}`).value);
-  const count = Number(document.getElementById(`edit-count-${idx}`).value);
-  if (!date || isNaN(countryIdx) || !count || count < 1) {
-    alert('日付・地域・国・人数を正しく入力してください');
-    renderTable();
-    return;
-  }
-  db.ref('country/' + row.key).set({
-    date, countryIdx, count, time: row.time
-  }).then(() => {
-    editingIdx = null;
-    loadCountryData();
-  });
-}
-
+// 削除
 function deleteRow(idx) {
-  if (!confirm('この行を削除しますか？')) return;
-  const row = countryData[idx];
-  db.ref('country/' + row.key).remove().then(() => {
+  const key = countryData[idx].key;
+  if (!key) return;
+  db.ref('country/' + key).remove().then(() => {
     loadCountryData();
   });
 }
 
-
-
-// exportSummary関数（countryDataを使う）
-function exportSummary() {
-  const selectedDate = document.getElementById('date-input').value;
-  if (!countryData.length || !selectedDate) {
-    document.getElementById('export-text').value = 'データがありません';
-    return;
-  }
-  const filtered = countryData.filter(row => row.date === selectedDate);
-  if (!filtered.length) {
-    document.getElementById('export-text').value = '該当日のデータがありません';
-    return;
-  }
-  // 国ごとに集計
-  const countryMap = {};
-  filtered.forEach(row => {
-    const c = countryList[row.countryIdx];
-    const key = `${c.flag} ${c.jp} (${c.en})`;
-    if (!countryMap[key]) countryMap[key] = 0;
-    countryMap[key] += Number(row.count);
-  });
-  // 多い順に並び替え
-  const sorted = Object.entries(countryMap).sort((a, b) => b[1] - a[1]);
-  const total = filtered.reduce((sum, row) => sum + Number(row.count), 0);
-  let text = `${selectedDate}　${total}人\n\n国ごとの人数\n`;
-  sorted.forEach(([name, count]) => {
-    const percent = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
-    text += `${name}：${count}人 (${percent}%)\n`;
-  });
-  document.getElementById('export-text').value = text.trim();
-}
-// ...existing code...
-function copyExportText() {
-  const textarea = document.getElementById('export-text');
-  textarea.select();
-  document.execCommand('copy');
-  alert('コピーしました');
-}
+// 日付変更時にテーブル再描画
+document.getElementById('date-input').addEventListener('change', renderTable);
 
 // 初期表示
 loadCountryData();
