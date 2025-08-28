@@ -18,6 +18,10 @@
     .chart-area { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; margin: 30px 0; }
     .chart-area > div { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px; }
     .chart-area h3 { text-align: center; margin: 0 0 10px 0; font-size: 16px; }
+    .filter-area { margin-bottom: 18px; text-align: center; }
+    .filter-area label { margin: 0 8px; }
+    .filter-area button { margin-left: 8px; background: #3b82f6; color: #fff; border: none; border-radius: 6px; padding: 6px 18px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+    .filter-area button:hover { background: #2563eb; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -32,10 +36,18 @@
     <div class="desc">
       <button id="reload-btn" onclick="loadStatics()">最新データで再集計</button>
       <br>
-      <span>country.htmlで記録した全データの累計・日別・国別ランキングなどを表示します。</span>
     </div>
-
-    <!-- 円グラフエリア追加 -->
+    <div class="filter-area">
+      <label>開始日: <input type="date" id="filter-start"></label>
+      <label>終了日: <input type="date" id="filter-end"></label>
+      <label>
+        国選択:
+        <select id="country-select">
+          <option value="">（全て）</option>
+        </select>
+      </label>
+      <button onclick="runFilter()">絞り込み</button>
+    </div>
     <div class="chart-area">
       <div>
         <h3>地域別 円グラフ</h3>
@@ -45,8 +57,11 @@
         <h3>国別ランキング 円グラフ</h3>
         <canvas id="countryPieChart" width="300" height="300"></canvas>
       </div>
+      <div>
+        <h3 id="trendTitle">国別入場数推移</h3>
+        <canvas id="countryTrendChart" width="600" height="300"></canvas>
+      </div>
     </div>
-
     <h2>累計ランキング</h2>
     <table class="stat-table" id="total-table">
       <thead>
@@ -83,6 +98,7 @@
     </table>
   </main>
   <script>
+
 const firebaseConfig = {
   apiKey: "AIzaSyDSZohtnPXem6m7f6A63KjXTQMUUFNk0Cg",
   authDomain: "ghost-entrance.firebaseapp.com",
@@ -155,9 +171,24 @@ const countryList = [
   {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
 ];
 
-let regionPieChart, countryPieChart;
+let regionPieChart, countryPieChart, countryTrendChartObj;
 
-function loadStatics() {
+// 国セレクトボックス初期化
+window.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('country-select');
+  countryList.forEach((c, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = `${c.flag} ${c.jp} (${c.en})`;
+    sel.appendChild(opt);
+  });
+});
+
+function runFilter() {
+  loadStatics(true);
+  showCountryTrend();
+}
+function loadStatics(isFilter) {
   db.ref('country').get().then(snapshot => {
     if (!snapshot.exists()) return;
     const allData = [];
@@ -166,10 +197,23 @@ function loadStatics() {
       allData.push({ ...obj[key], key });
     });
 
+    // 期間フィルタ
+    let filtered = allData;
+    if (isFilter) {
+      const start = document.getElementById('filter-start').value;
+      const end = document.getElementById('filter-end').value;
+      filtered = allData.filter(row => {
+        if (!row.date) return false;
+        if (start && row.date < start) return false;
+        if (end && row.date > end) return false;
+        return true;
+      });
+    }
+
     // 円グラフ用データ集計
     // 地域別
     const regionMap = {};
-    allData.forEach(row => {
+    filtered.forEach(row => {
       const c = countryList[row.countryIdx];
       const region = c && c.region ? c.region : 'その他';
       if (!regionMap[region]) regionMap[region] = 0;
@@ -180,7 +224,7 @@ function loadStatics() {
 
     // 国別ランキング
     const countryMap = {};
-    allData.forEach(row => {
+    filtered.forEach(row => {
       const c = countryList[row.countryIdx];
       const key = c ? `${c.flag} ${c.jp}` : '不明';
       if (!countryMap[key]) countryMap[key] = 0;
@@ -233,7 +277,7 @@ function loadStatics() {
 
     // 累計ランキング
     const countryMap2 = {};
-    allData.forEach(row => {
+    filtered.forEach(row => {
       const c = countryList[row.countryIdx];
       const key = `${c.flag} ${c.jp} (${c.en})`;
       if (!countryMap2[key]) countryMap2[key] = 0;
@@ -248,7 +292,7 @@ function loadStatics() {
 
     // 日別集計
     const dateMap = {};
-    allData.forEach(row => {
+    filtered.forEach(row => {
       if (!dateMap[row.date]) dateMap[row.date] = [];
       dateMap[row.date].push(row);
     });
@@ -272,7 +316,7 @@ function loadStatics() {
     // 最新20件
     const recentTbody = document.querySelector('#recent-table tbody');
     recentTbody.innerHTML = '';
-    allData.slice(-20).reverse().forEach(row => {
+    filtered.slice(-20).reverse().forEach(row => {
       const c = countryList[row.countryIdx];
       recentTbody.innerHTML += `<tr>
         <td>${row.date}</td>
@@ -284,6 +328,67 @@ function loadStatics() {
   });
 }
 
+// 国別入場数推移グラフ
+function showCountryTrend() {
+  db.ref('country').get().then(snapshot => {
+    if (!snapshot.exists()) return;
+    const allData = [];
+    const obj = snapshot.val();
+    Object.keys(obj).forEach(key => {
+      allData.push({ ...obj[key], key });
+    });
+
+    // 期間フィルタ
+    const start = document.getElementById('filter-start').value;
+    const end = document.getElementById('filter-end').value;
+    let filtered = allData.filter(row => {
+      if (!row.date) return false;
+      if (start && row.date < start) return false;
+      if (end && row.date > end) return false;
+      return true;
+    });
+
+    // 国フィルタ
+    const selIdx = document.getElementById('country-select').value;
+    let trendData = {};
+    let countryName = "";
+    if (selIdx !== "") {
+      filtered = filtered.filter(row => String(row.countryIdx) === selIdx);
+      countryName = `${countryList[selIdx].flag} ${countryList[selIdx].jp} (${countryList[selIdx].en})`;
+    } else {
+      countryName = "全ての国";
+    }
+
+    // 日付ごとに人数集計
+    filtered.forEach(row => {
+      if (!trendData[row.date]) trendData[row.date] = 0;
+      trendData[row.date] += Number(row.count);
+    });
+
+    // グラフ描画
+    const labels = Object.keys(trendData).sort();
+    const dataArr = labels.map(date => trendData[date]);
+    document.getElementById('trendTitle').textContent = `国別入場数推移（${countryName}）`;
+    const ctx = document.getElementById('countryTrendChart').getContext('2d');
+    if (countryTrendChartObj) countryTrendChartObj.destroy();
+    countryTrendChartObj = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: '入場数', data: dataArr, borderColor: '#3b82f6', backgroundColor: '#60a5fa22', fill: true }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  });
+}
+
 // 初期表示
 loadStatics();
   </script>
+</body>
+</html>
