@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>loyal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: linear-gradient(120deg, #e0e7ff 0%, #fff 100%);
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      background: #3b82f6;
+      color: #fff;
+      padding: 28px 20px 18px 20px;
+      font-size: 28px;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 2px;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+      border-bottom-left-radius: 18px;
+      border-bottom-right-radius: 18px;
+    }
+    main {
+      max-width: 650px;
+      margin: 40px auto 32px auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(59,130,246,0.10);
+      padding: 38px 28px 32px 28px;
+    }
+    h2 {
+      color: #2563eb;
+      font-size: 22px;
+      margin-bottom: 18px;
+      margin-top: 0;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+    h3 {
+      color: #64748b;
+      font-size: 18px;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+      border-left: 4px solid #3b82f6;
+      padding-left: 10px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      background: linear-gradient(90deg, #e0e7ff 0%, #f1f5f9 100%);
+      border-radius: 8px;
+      padding: 8px 10px;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.04);
+    }
+    label {
+      display: inline-block;
+      min-width: 90px;
+      font-weight: 500;
+      color: #2563eb;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+    }
+    select, input[type="text"] {
+      width: 70px;
+      font-size: 16px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid #93c5fd;
+      background: #f1f5f9;
+      margin-right: 4px;
+      transition: border 0.2s;
+    }
+    select:focus, input[type="text"]:focus {
+      border: 1.5px solid #2563eb;
+      outline: none;
+    }
+    textarea {
+      width: 100%;
+      height: 180px;
+      font-size: 15px;
+      margin-top: 18px;
+      border-radius: 10px;
+      border: 1px solid #93c5fd;
+      background: #f1f5f9;
+      padding: 10px;
+      resize: vertical;
+      box-sizing: border-box;
+      color: #1e293b;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 32px;
+      background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.09);
+      transition: background 0.2s, transform 0.2s;
+    }
+    button:active {
+      background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 100%);
+      transform: scale(0.98);
+    }
+    #addExtraBtn {
+      background: linear-gradient(90deg, #f0abfc 0%, #bae6fd 100%);
+      color: #2563eb;
+      border: 1px solid #2563eb;
+      margin-top: 0;
+      margin-bottom: 18px;
+      font-size: 16px;
+      padding: 7px 18px;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.07);
+    }
+    #addExtraBtn:active {
+      background: linear-gradient(90deg, #bae6fd 0%, #f0abfc 100%);
+      color: #1e293b;
+    }
+    @media (max-width: 700px) {
+      main { padding: 10px 2vw; }
+      .row { flex-direction: column; gap: 8px; padding: 8px 4px; }
+      label, select, input[type="text"] { width: 100%; min-width: 0; }
+      textarea { font-size: 13px; }
+      button { width: 100%; }
+      h2 { font-size: 18px; }
+      h3 { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <header>loyal（金曜）キャッシャー集計</header>
+  <main>
+    <h2>イベント集計入力フォーム</h2>
+    <div class="row"><label>総数:</label><select id="total"></select></div>
+    <div class="row"><label>外国人:</label><select id="foreigner"></select></div>
+    <div class="row"><label>M:</label><select id="male"></select></div>
+    <div class="row"><label>W:</label><select id="female"></select></div>
+    <div class="row"><label>Door:</label><select id="door"></select></div>
+    <div class="row"><label>外国人Door:</label><select id="foreignerDoor"></select></div>
+    <div class="row"><label>22:00-1:00 Door:</label><select id="door19"></select></div>
+    <div class="row"><label>22:00-1:00 外国人Door:</label><select id="foreignerDoor8"></select></div>
+    <div class="row"><label>学生証Door:</label><select id="studentDoor"></select></div>
+    <div class="row"><label>店ゲスト:</label><select id="shopGuest"></select></div>
+    <div class="row"><label>店Free:</label><select id="shopFree"></select></div>
+    <h3>ゲスト枠</h3>
+    <div class="row"><label>LEAD:</label><label>ゲスト:</label><select id="leadGuest"></select><label>フリー:</label><select id="leadFree"></select></div>
+    <div class="row"><label>DANBO:</label><label>ゲスト:</label><select id="danboGuest"></select><label>フリー:</label><select id="danboFree"></select></div>
+    <div class="row"><label>AR:</label><label>ゲスト:</label><select id="arGuest"></select><label>フリー:</label><select id="arFree"></select></div>
+    <div class="row"><label>Freshness cut:</label><label>ゲスト:</label><select id="freshGuest"></select><label>フリー:</label><select id="freshFree"></select></div>
+    <div class="row"><label>Wannabe:</label><label>ゲスト:</label><select id="wannabeGuest"></select><label>フリー:</label><select id="wannabeFree"></select></div>
+    <div class="row"><label>Tomsaurus:</label><label>ゲスト:</label><select id="tomsaurusGuest"></select><label>フリー:</label><select id="tomsaurusFree"></select></div>
+    <div class="row"><label>N.kohkey:</label><label>ゲスト:</label><select id="nkohkeyGuest"></select><label>フリー:</label><select id="nkohkeyFree"></select></div>
+    <div class="row"><label>サワディー:</label><label>ゲスト:</label><select id="sawadeeGuest"></select><label>フリー:</label><select id="sawadeeFree"></select></div>
+    <div class="row"><label>ジュリアン:</label><label>ゲスト:</label><select id="julianGuest"></select><label>フリー:</label><select id="julianFree"></select></div>
+    <div class="row"><label>Sho:</label><label>ゲスト:</label><select id="shoGuest"></select><label>フリー:</label><select id="shoFree"></select></div>
+    <div class="row"><label>シンヤ:</label><label>ゲスト:</label><select id="shinyaGuest"></select><label>フリー:</label><select id="shinyaFree"></select></div>
+    <div class="row"><label>ケイヤ:</label><label>ゲスト:</label><select id="keyaGuest"></select><label>フリー:</label><select id="keyaFree"></select></div>
+    <div class="row"><label>マサキ:</label><label>ゲスト:</label><select id="masakiGuest"></select><label>フリー:</label><select id="masakiFree"></select></div>
+    <div class="row"><label>リョウタ:</label><label>ゲスト:</label><select id="ryoutaGuest"></select><label>フリー:</label><select id="ryoutaFree"></select></div>
+    <div class="row"><label>Kiii:</label><label>ゲスト:</label><select id="kiiiGuest"></select><label>フリー:</label><select id="kiiiFree"></select></div>
+    <div class="row"><label>ショウタ:</label><label>ゲスト:</label><select id="shotaGuest"></select><label>フリー:</label><select id="shotaFree"></select></div>
+    <div class="row"><label>Tomoyo:</label><label>ゲスト:</label><select id="tomoyoGuest"></select><label>フリー:</label><select id="tomoyoFree"></select></div>
+    <div class="row"><label>Vincent:</label><label>ゲスト:</label><select id="vincentGuest"></select><label>フリー:</label><select id="vincentFree"></select></div>
+    <div class="row"><label>Liz:</label><label>ゲスト:</label><select id="lizGuest"></select><label>フリー:</label><select id="lizFree"></select></div>
+    <div class="row"><label>タクミ:</label><label>ゲスト:</label><select id="takumiGuest"></select><label>フリー:</label><select id="takumiFree"></select></div>
+    <div class="row"><label>Sims:</label><label>ゲスト:</label><select id="simsGuest"></select><label>フリー:</label><select id="simsFree"></select></div>
+    <div class="row"><label>カジイ:</label><label>ゲスト:</label><select id="kajiiGuest"></select><label>フリー:</label><select id="kajiiFree"></select></div>
+    <!-- 臨時追加枠 -->
+    <div id="extraRows"></div>
+    <button type="button" id="addExtraBtn">＋ ゲスト追加</button>
+    <h3>時間帯IN/OUT</h3>
+    <div class="row"><label>22:00-23:00 IN:</label><select id="in22"></select><label>OUT:</label><select id="out22"></select></div>
+    <div class="row"><label>23:00-24:00 IN:</label><select id="in23"></select><label>OUT:</label><select id="out23"></select></div>
+    <div class="row"><label>00:00-01:00 IN:</label><select id="in0"></select><label>OUT:</label><select id="out0"></select></div>
+    <div class="row"><label>01:00-02:00 IN:</label><select id="in1"></select><label>OUT:</label><select id="out1"></select></div>
+    <div class="row"><label>02:00-03:00 IN:</label><select id="in2"></select><label>OUT:</label><select id="out2"></select></div>
+    <div class="row"><label>03:00-04:00 IN:</label><select id="in3"></select><label>OUT:</label><select id="out3"></select></div>
+    <div class="row"><label>04:00-04:30 IN:</label><select id="in4"></select><label>OUT:</label><select id="out4"></select></div>
+    <button onclick="copyResult()">コピー</button>
+    <textarea id="resultArea" readonly></textarea>
+  </main>
+  <script>
+    // プルダウン生成（0～1000まで、初期値は全て0）
+    function setSelectOptions(ids) {
+      ids.forEach(id => {
+        const select = document.getElementById(id);
+        if (!select) return;
+        select.innerHTML = '';
+        for(let n=0; n<=1000; n++) {
+          const opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = n;
+          if (n === 0) opt.selected = true;
+          select.appendChild(opt);
+        }
+      });
+    }
+
+    // 全IDリスト（臨時枠は動的追加なのでここには含めない）
+    const ids = [
+      'total','foreigner','male','female','door','foreignerDoor','door19','foreignerDoor8','studentDoor','shopGuest','shopFree',
+      'leadGuest','leadFree',
+      'danboGuest','danboFree',
+      'arGuest','arFree',
+      'freshGuest','freshFree',
+      'wannabeGuest','wannabeFree',
+      'tomsaurusGuest','tomsaurusFree',
+      'nkohkeyGuest','nkohkeyFree',
+      'sawadeeGuest','sawadeeFree',
+      'julianGuest','julianFree',
+      'shoGuest','shoFree',
+      'shinyaGuest','shinyaFree',
+      'keyaGuest','keyaFree',
+      'masakiGuest','masakiFree',
+      'ryoutaGuest','ryoutaFree',
+      'kiiiGuest','kiiiFree',
+      'shotaGuest','shotaFree',
+      'tomoyoGuest','tomoyoFree',
+      'vincentGuest','vincentFree',
+      'lizGuest','lizFree',
+      'takumiGuest','takumiFree',
+      'simsGuest','simsFree',
+      'kajiiGuest','kajiiFree',
+      'in22','out22','in23','out23','in0','out0','in1','out1','in2','out2','in3','out3','in4','out4'
+    ];
+
+    setSelectOptions(ids);
+
+    // 臨時枠追加機能
+    let extraCount = 0;
+    document.getElementById('addExtraBtn').onclick = function() {
+      extraCount++;
+      const extraRows = document.getElementById('extraRows');
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `
+        <label>ゲスト名:</label>
+        <input type="text" id="extraName${extraCount}" placeholder="名前を入力">
+        <label>ゲスト:</label>
+        <select id="extraGuest${extraCount}"></select>
+        <label>フリー:</label>
+        <select id="extraFree${extraCount}"></select>
+      `;
+      extraRows.appendChild(row);
+      setSelectOptions([`extraGuest${extraCount}`, `extraFree${extraCount}`]);
+    };
+
+    function copyResult() {
+      const get = id => Number(document.getElementById(id)?.value || 0);
+      let result = 
+`総数: ${get('total')}
+外国人: ${get('foreigner')}
+
+M: ${get('male')}
+W: ${get('female')}
+
+Door: ${get('door')}
+外国人Door: ${get('foreignerDoor')}
+
+22:00-1:00 Door: ${get('door19')}
+22:00-1:00 外国人Door: ${get('foreignerDoor8')}
+
+学生証Door: ${get('studentDoor')}
+
+店ゲスト: ${get('shopGuest')}
+店Free: ${get('shopFree')}
+
+LEAD ${get('leadGuest') + get('leadFree')}
+(ゲスト${get('leadGuest')} フリー${get('leadFree')})
+
+DANBO ${get('danboGuest') + get('danboFree')}
+(ゲスト${get('danboGuest')} フリー${get('danboFree')})
+
+AR ${get('arGuest') + get('arFree')}
+(ゲスト${get('arGuest')} フリー${get('arFree')})
+
+Freshness cut ${get('freshGuest') + get('freshFree')}
+(ゲスト${get('freshGuest')} フリー${get('freshFree')})
+
+Wannabe ${get('wannabeGuest') + get('wannabeFree')}
+(ゲスト${get('wannabeGuest')} フリー${get('wannabeFree')})
+
+Tomsaurus ${get('tomsaurusGuest') + get('tomsaurusFree')}
+(ゲスト${get('tomsaurusGuest')} フリー${get('tomsaurusFree')})
+
+N.kohkey ${get('nkohkeyGuest') + get('nkohkeyFree')}
+(ゲスト${get('nkohkeyGuest')} フリー${get('nkohkeyFree')})
+
+サワディー ${get('sawadeeGuest') + get('sawadeeFree')}
+(ゲスト${get('sawadeeGuest')} フリー${get('sawadeeFree')})
+
+ジュリアン ${get('julianGuest') + get('julianFree')}
+(ゲスト${get('julianGuest')} フリー${get('julianFree')})
+
+Sho ${get('shoGuest') + get('shoFree')}
+(ゲスト${get('shoGuest')} フリー${get('shoFree')})
+
+シンヤ ${get('shinyaGuest') + get('shinyaFree')}
+(ゲスト${get('shinyaGuest')} フリー${get('shinyaFree')})
+
+ケイヤ ${get('keyaGuest') + get('keyaFree')}
+(ゲスト${get('keyaGuest')} フリー${get('keyaFree')})
+
+マサキ ${get('masakiGuest') + get('masakiFree')}
+(ゲスト${get('masakiGuest')} フリー${get('masakiFree')})
+
+リョウタ ${get('ryoutaGuest') + get('ryoutaFree')}
+(ゲスト${get('ryoutaGuest')} フリー${get('ryoutaFree')})
+
+Kiii ${get('kiiiGuest') + get('kiiiFree')}
+(ゲスト${get('kiiiGuest')} フリー${get('kiiiFree')})
+
+ショウタ ${get('shotaGuest') + get('shotaFree')}
+(ゲスト${get('shotaGuest')} フリー${get('shotaFree')})
+
+Tomoyo ${get('tomoyoGuest') + get('tomoyoFree')}
+(ゲスト${get('tomoyoGuest')} フリー${get('tomoyoFree')})
+
+Vincent ${get('vincentGuest') + get('vincentFree')}
+(ゲスト${get('vincentGuest')} フリー${get('vincentFree')})
+
+Liz ${get('lizGuest') + get('lizFree')}
+(ゲスト${get('lizGuest')} フリー${get('lizFree')})
+
+タクミ ${get('takumiGuest') + get('takumiFree')}
+(ゲスト${get('takumiGuest')} フリー${get('takumiFree')})
+
+Sims ${get('simsGuest') + get('simsFree')}
+(ゲスト${get('simsGuest')} フリー${get('simsFree')})
+
+カジイ ${get('kajiiGuest') + get('kajiiFree')}
+(ゲスト${get('kajiiGuest')} フリー${get('kajiiFree')})
+`;
+
+      // 臨時枠をすべて追加
+      for(let i=1; i<=extraCount; i++) {
+        const name = document.getElementById(`extraName${i}`)?.value.trim();
+        const guest = get(`extraGuest${i}`);
+        const free = get(`extraFree${i}`);
+        const total = guest + free;
+        if (name) {
+          result += `\n${name} ${total}\n(ゲスト${guest} フリー${free})\n`;
+        }
+      }
+
+      result += `
+22:00-23:00 IN: ${get('in22')}
+OUT: ${get('out22')}
+
+23:00-24:00 IN: ${get('in23')}
+OUT: ${get('out23')}
+
+0:00-1:00 IN: ${get('in0')}
+OUT: ${get('out0')}
+
+1:00-2:00 IN: ${get('in1')}
+OUT: ${get('out1')}
+
+2:00-3:00 IN: ${get('in2')}
+OUT: ${get('out2')}
+
+3:00-4:00 IN: ${get('in3')}
+OUT: ${get('out3')}
+
+4:00-4:30 IN: ${get('in4')}
+OUT: ${get('out4')}
+`;
+
+      document.getElementById('resultArea').value = result;
+      navigator.clipboard.writeText(result);
+    }
+  </script>
+</body>
+</html>
