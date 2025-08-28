@@ -3,26 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <title>キャッシャー集計まとめ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: 'Noto Sans JP', sans-serif; background: #f4f8fb; margin: 0; }
-    main { max-width: 400px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(59,130,246,0.08); padding: 30px 20px; }
-    h2 { color: #2563eb; margin-top: 0; }
-    ul { padding-left: 0; }
-    li { list-style: none; margin-bottom: 18px; }
-    a { display: block; font-size: 20px; color: #2563eb; background: #e0e7ff; border-radius: 8px; padding: 12px; text-decoration: none; border: 1px solid #2563eb; transition: background 0.2s; }
-    a:hover { background: #2563eb; color: #fff; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: linear-gradient(120deg, #e0e7ff 0%, #fff 100%);
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      background: #3b82f6;
+      color: #fff;
+      padding: 32px 20px 20px 20px;
+      font-size: 32px;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 2px;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+    }
+    main {
+      max-width: 520px;
+      margin: 48px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(59,130,246,0.10);
+      padding: 40px 30px 32px 30px;
+      text-align: center;
+    }
+    h2 {
+      color: #2563eb;
+      font-size: 22px;
+      margin-bottom: 18px;
+      margin-top: 0;
+      letter-spacing: 1px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      margin: 18px 0;
+    }
+    a {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100%;
+      max-width: 350px;
+      font-size: 20px;
+      font-weight: 500;
+      color: #2563eb;
+      background: linear-gradient(90deg, #e0e7ff 0%, #bae6fd 100%);
+      border-radius: 8px;
+      padding: 12px 0 12px 12px;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.07);
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      letter-spacing: 1px;
+      margin: 0 auto 18px auto;
+    }
+    a img {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      margin-right: 16px;
+      object-fit: cover;
+      background: #e0e7ff;
+    }
+    a:hover {
+      background: linear-gradient(90deg, #93c5fd 0%, #f0abfc 100%);
+      color: #1e293b;
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 6px 18px rgba(59,130,246,0.13);
+      text-decoration: none;
+    }
+    .desc {
+      color: #64748b;
+      font-size: 15px;
+      margin-bottom: 32px;
+      margin-top: 10px;
+      letter-spacing: 0.5px;
+    }
+    @media (max-width: 600px) {
+      main { padding: 18px 4vw; }
+      header { font-size: 22px; padding: 18px 5px 12px 5px; }
+      a { font-size: 16px; padding: 11px 0 11px 8px; }
+      h2 { font-size: 17px; }
+      a img { width: 36px; height: 36px; margin-right: 8px; }
+    }
   </style>
 </head>
 <body>
+  <header>キャッシャー集計まとめ</header>
   <main>
-    <h2>キャッシャー集計まとめ
-    </h2>
+    <div class="desc">
+      各曜日のキャッシャー集計ページへアクセスできます。
+    </div>
     <ul>
-        <li><a href="https://sugad4i.github.io/statistics/cashier-shayo">SHAYO（水曜）</a></li>
-        <li><a href="https://sugad4i.github.io/statistics/cashier-Argo">Argo（木曜）</a></li>
-        <li><a href="https://sugad4i.github.io/statistics/cashier-loyal">loyal（金曜）</a></li>
-        <li><a href="https://sugad4i.github.io/statistics/cashier-encore">ENCORE（土曜）</a></li>
-        <li><a href="https://sugad4i.github.io/statistics/cashier-wayup">WAYUP（日曜）</a></li>
+      <li>
+        <a href="cashier-shayo.html">
+          <img src="cashier.png" alt="水曜サムネ">
+          SHAYO（水曜）
+        </a>
+      </li>
+      <li>
+        <a href="cashier-argo.html">
+          <img src="cashier.png" alt="木曜サムネ">
+          Argo（木曜）
+        </a>
+      </li>
+      <li>
+        <a href="cashier-loyal.html">
+          <img src="cashier.png" alt="金曜サムネ">
+          loyal（金曜）
+        </a>
+      </li>
+      <li>
+        <a href="cashier-encore.html">
+          <img src="cashier.png" alt="土曜サムネ">
+          ENCORE（土曜）
+        </a>
+      </li>
+      <li>
+        <a href="cashier-wayup.html">
+          <img src="cashier.png" alt="日曜サムネ">
+          WAYUP（日曜）
+        </a>
+      </li>
     </ul>
   </main>
 </body>
