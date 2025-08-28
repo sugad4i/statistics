@@ -194,6 +194,7 @@ const countryList = [
   {region:"中東・アフリカ", flag:"🇿🇦", jp:"南アフリカ", en:"South Africa"},
   {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
 ];
+
 // 表示したい国のcountryList内インデックスを指定
 const panelCountryIndexes = [
   35, // アメリカ
@@ -227,6 +228,19 @@ const topCountryList = panelCountryIndexes.map(idx => countryList[idx]);
 let panelCounts = Array(topCountryList.length).fill(0);
 let countryData = [];
 
+// 日付デフォルト自動入力（7時までは前日、それ以降は当日）
+function setDefaultDate() {
+  const now = new Date();
+  let dateObj = new Date(now);
+  if (now.getHours() < 7) {
+    dateObj.setDate(now.getDate() - 1);
+  }
+  const yyyy = dateObj.getFullYear();
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  document.getElementById('date-input').value = `${yyyy}-${mm}-${dd}`;
+}
+
 // 国パネル生成（均等な長方形・複数回押し対応・デザイン強化）
 function renderCountryPanel() {
   const panel = document.getElementById('country-panel');
@@ -247,7 +261,6 @@ function renderCountryPanel() {
     panel.appendChild(btn);
   });
 }
-renderCountryPanel();
 
 // 現在時刻（hh:mm）取得
 function getNowTimeStr() {
@@ -336,8 +349,12 @@ function deleteRow(idx) {
 // 日付変更時にテーブル再描画
 document.getElementById('date-input').addEventListener('change', renderTable);
 
-// 初期表示
-loadCountryData();
+// 初期表示（デフォルト日付セット・パネル描画・データ取得）
+window.addEventListener('DOMContentLoaded', () => {
+  setDefaultDate();
+  renderCountryPanel();
+  loadCountryData();
+});
   </script>
 </body>
 </html>
