@@ -319,26 +319,19 @@ sims ${get('simsGuest') + get('simsFree')}
       }
 
       result += `
-22:00-23:00 IN: ${get('in22')}
-OUT: ${get('out22')}
+22:00-23:00 IN: ${get('in22')}  OUT: ${get('out22')}
 
-23:00-24:00 IN: ${get('in23')}
-OUT: ${get('out23')}
+23:00-24:00 IN: ${get('in23')}  OUT: ${get('out23')}
 
-0:00-1:00 IN: ${get('in0')}
-OUT: ${get('out0')}
+0:00-1:00 IN: ${get('in0')} OUT: ${get('out0')}
 
-1:00-2:00 IN: ${get('in1')}
-OUT: ${get('out1')}
+1:00-2:00 IN: ${get('in1')} OUT: ${get('out1')}
 
-2:00-3:00 IN: ${get('in2')}
-OUT: ${get('out2')}
+2:00-3:00 IN: ${get('in2')} OUT: ${get('out2')}
 
-3:00-4:00 IN: ${get('in3')}
-OUT: ${get('out3')}
+3:00-4:00 IN: ${get('in3')} OUT: ${get('out3')}
 
-4:00-4:30 IN: ${get('in4')}
-OUT: ${get('out4')}
+4:00-4:30 IN: ${get('in4')} OUT: ${get('out4')}
 `;
 
       document.getElementById('resultArea').value = result;
