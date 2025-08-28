@@ -142,50 +142,88 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 上位25カ国＋代表的な先進国
-const topCountryList = [
-  {flag:"🇺🇸", jp:"アメリカ", en:"United States"},
-  {flag:"🇨🇳", jp:"中国", en:"China"},
-  {flag:"🇰🇷", jp:"韓国", en:"South Korea"},
-  {flag:"🇫🇷", jp:"フランス", en:"France"},
-  {flag:"🇬🇧", jp:"イギリス", en:"United Kingdom"},
-  {flag:"🇦🇺", jp:"オーストラリア", en:"Australia"},
-  {flag:"🇨🇦", jp:"カナダ", en:"Canada"},
-  {flag:"🇹🇭", jp:"タイ", en:"Thailand"},
-  {flag:"🇳🇱", jp:"オランダ", en:"Netherlands"},
-  {flag:"🇮🇹", jp:"イタリア", en:"Italy"},
-  {flag:"🇩🇪", jp:"ドイツ", en:"Germany"},
-  {flag:"🇮🇳", jp:"インド", en:"India"},
-  {flag:"🇸🇪", jp:"スウェーデン", en:"Sweden"},
-  {flag:"🇹🇷", jp:"トルコ", en:"Turkey"},
-  {flag:"🇵🇭", jp:"フィリピン", en:"Philippines"},
-  {flag:"🇲🇾", jp:"マレーシア", en:"Malaysia"},
-  {flag:"🇳🇿", jp:"ニュージーランド", en:"New Zealand"},
-  {flag:"🇲🇽", jp:"メキシコ", en:"Mexico"},
-  {flag:"🇸🇦", jp:"サウジアラビア", en:"Saudi Arabia"},
-  {flag:"🇦🇪", jp:"アラブ首長国連邦", en:"United Arab Emirates"},
-  {flag:"🇨🇭", jp:"スイス", en:"Switzerland"},
-  {flag:"🇳🇴", jp:"ノルウェー", en:"Norway"},
-  {flag:"🇸🇬", jp:"シンガポール", en:"Singapore"},
-  {flag:"🇭🇰", jp:"香港", en:"Hong Kong"},
-  {flag:"🇹🇼", jp:"台湾", en:"Taiwan"},
-  // 代表的な先進国（重複除外）
-  {flag:"🇪🇸", jp:"スペイン", en:"Spain"},
-  {flag:"🇩🇰", jp:"デンマーク", en:"Denmark"},
-  {flag:"🇦🇹", jp:"オーストリア", en:"Austria"},
-  {flag:"🇧🇪", jp:"ベルギー", en:"Belgium"},
-  {flag:"🇫🇮", jp:"フィンランド", en:"Finland"},
-  {flag:"🇨🇿", jp:"チェコ", en:"Czech Republic"},
-  {flag:"🇵🇱", jp:"ポーランド", en:"Poland"},
-  {flag:"🇧🇷", jp:"ブラジル", en:"Brazil"},
-  {flag:"🇦🇷", jp:"アルゼンチン", en:"Argentina"},
-  {flag:"🇨🇱", jp:"チリ", en:"Chile"},
-  {flag:"🇵🇪", jp:"ペルー", en:"Peru"},
-  {flag:"🇨🇴", jp:"コロンビア", en:"Colombia"},
-  {flag:"🇿🇦", jp:"南アフリカ", en:"South Africa"},
-  {flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
+const countryList = [
+  {region:"アジア", flag:"🇰🇷", jp:"韓国", en:"South Korea"},
+  {region:"アジア", flag:"🇨🇳", jp:"中国", en:"China"},
+  {region:"アジア", flag:"🇹🇼", jp:"台湾", en:"Taiwan"},
+  {region:"アジア", flag:"🇭🇰", jp:"香港", en:"Hong Kong"},
+  {region:"アジア", flag:"🇹🇭", jp:"タイ", en:"Thailand"},
+  {region:"アジア", flag:"🇻🇳", jp:"ベトナム", en:"Vietnam"},
+  {region:"アジア", flag:"🇵🇭", jp:"フィリピン", en:"Philippines"},
+  {region:"アジア", flag:"🇮🇩", jp:"インドネシア", en:"Indonesia"},
+  {region:"アジア", flag:"🇲🇾", jp:"マレーシア", en:"Malaysia"},
+  {region:"アジア", flag:"🇸🇬", jp:"シンガポール", en:"Singapore"},
+  {region:"アジア", flag:"🇮🇳", jp:"インド", en:"India"},
+  {region:"アジア", flag:"🇵🇰", jp:"パキスタン", en:"Pakistan"},
+  {region:"アジア", flag:"🇳🇵", jp:"ネパール", en:"Nepal"},
+  {region:"アジア", flag:"🇱🇰", jp:"スリランカ", en:"Sri Lanka"},
+  {region:"アジア", flag:"🇲🇳", jp:"モンゴル", en:"Mongolia"},
+  {region:"アジア", flag:"🇧🇩", jp:"バングラデシュ", en:"Bangladesh"},
+  {region:"アジア", flag:"🇰🇭", jp:"カンボジア", en:"Cambodia"},
+  {region:"アジア", flag:"🇱🇦", jp:"ラオス", en:"Laos"},
+  {region:"アジア", flag:"🇧🇳", jp:"ブルネイ", en:"Brunei"},
+  {region:"アジア", flag:"🇹🇱", jp:"東ティモール", en:"Timor-Leste"},
+  {region:"欧州", flag:"🇬🇧", jp:"イギリス", en:"United Kingdom"},
+  {region:"欧州", flag:"🇫🇷", jp:"フランス", en:"France"},
+  {region:"欧州", flag:"🇩🇪", jp:"ドイツ", en:"Germany"},
+  {region:"欧州", flag:"🇮🇹", jp:"イタリア", en:"Italy"},
+  {region:"欧州", flag:"🇪🇸", jp:"スペイン", en:"Spain"},
+  {region:"欧州", flag:"🇳🇱", jp:"オランダ", en:"Netherlands"},
+  {region:"欧州", flag:"🇨🇭", jp:"スイス", en:"Switzerland"},
+  {region:"欧州", flag:"🇸🇪", jp:"スウェーデン", en:"Sweden"},
+  {region:"欧州", flag:"🇳🇴", jp:"ノルウェー", en:"Norway"},
+  {region:"欧州", flag:"🇫🇮", jp:"フィンランド", en:"Finland"},
+  {region:"欧州", flag:"🇩🇰", jp:"デンマーク", en:"Denmark"},
+  {region:"欧州", flag:"🇦🇹", jp:"オーストリア", en:"Austria"},
+  {region:"欧州", flag:"🇵🇱", jp:"ポーランド", en:"Poland"},
+  {region:"欧州", flag:"🇨🇿", jp:"チェコ", en:"Czech Republic"},
+  {region:"欧州", flag:"🇧🇪", jp:"ベルギー", en:"Belgium"},
+  {region:"北米", flag:"🇺🇸", jp:"アメリカ", en:"United States"},
+  {region:"北米", flag:"🇨🇦", jp:"カナダ", en:"Canada"},
+  {region:"中南米", flag:"🇲🇽", jp:"メキシコ", en:"Mexico"},
+  {region:"中南米", flag:"🇧🇷", jp:"ブラジル", en:"Brazil"},
+  {region:"中南米", flag:"🇦🇷", jp:"アルゼンチン", en:"Argentina"},
+  {region:"中南米", flag:"🇨🇱", jp:"チリ", en:"Chile"},
+  {region:"中南米", flag:"🇵🇪", jp:"ペルー", en:"Peru"},
+  {region:"中南米", flag:"🇨🇴", jp:"コロンビア", en:"Colombia"},
+  {region:"オセアニア", flag:"🇦🇺", jp:"オーストラリア", en:"Australia"},
+  {region:"オセアニア", flag:"🇳🇿", jp:"ニュージーランド", en:"New Zealand"},
+  {region:"中東・アフリカ", flag:"🇹🇷", jp:"トルコ", en:"Turkey"},
+  {region:"中東・アフリカ", flag:"🇸🇦", jp:"サウジアラビア", en:"Saudi Arabia"},
+  {region:"中東・アフリカ", flag:"🇦🇪", jp:"アラブ首長国連邦", en:"United Arab Emirates"},
+  {region:"中東・アフリカ", flag:"🇿🇦", jp:"南アフリカ", en:"South Africa"},
+  {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
+];
+// 表示したい国のcountryList内インデックスを指定
+const panelCountryIndexes = [
+  35, // アメリカ
+  1,  // 中国
+  0,  // 韓国
+  21, // フランス
+  20, // イギリス
+  43, // オーストラリア
+  36, // カナダ
+  4,  // タイ
+  25, // オランダ
+  23, // イタリア
+  22, // ドイツ
+  10, // インド
+  27, // スウェーデン
+  45, // トルコ
+  6,  // フィリピン
+  8,  // マレーシア
+  44, // ニュージーランド
+  37, // メキシコ
+  46, // サウジアラビア
+  47, // アラブ首長国連邦
+  26, // スイス
+  28, // ノルウェー
+  9,  // シンガポール
+  3,  // 香港
+  2   // 台湾
 ];
 
+const topCountryList = panelCountryIndexes.map(idx => countryList[idx]);
 let panelCounts = Array(topCountryList.length).fill(0);
 let countryData = [];
 
@@ -231,7 +269,7 @@ function confirmPanel() {
       const time = getNowTimeStr();
       db.ref('country').push({
         date,
-        countryIdx: idx,
+        countryIdx: panelCountryIndexes[idx], // countryListのインデックスを保存
         count,
         time
       });
@@ -271,7 +309,7 @@ function renderTable() {
     .reverse();
 
   filtered.forEach((row) => {
-    const c = topCountryList[row.countryIdx];
+    const c = countryList[row.countryIdx];
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.date}</td>
