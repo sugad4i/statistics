@@ -22,6 +22,8 @@
     .filter-area label { margin: 0 8px; }
     .filter-area button { margin-left: 8px; background: #3b82f6; color: #fff; border: none; border-radius: 6px; padding: 6px 18px; font-size: 1rem; font-weight: bold; cursor: pointer; }
     .filter-area button:hover { background: #2563eb; }
+    .toggle-area { margin-bottom: 18px; text-align: center; }
+    .toggle-area label { font-size: 15px; color: #2563eb; margin-left: 8px; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -48,6 +50,10 @@
         </select>
       </label>
       <button onclick="runFilter()">絞り込み</button>
+    </div>
+    <div class="toggle-area">
+      <input type="checkbox" id="ratioMode" onchange="runFilter()">
+      <label for="ratioMode">日別集計を「割合（%）」で表示</label>
     </div>
     <div class="chart-area">
       <div>
@@ -79,8 +85,8 @@
       <thead>
         <tr>
           <th>日付</th>
-          <th>合計人数</th>
-          <th>最多国</th>
+          <th id="date-table-total-header">合計人数</th>
+          <th id="date-table-most-header">最多国</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -99,7 +105,6 @@
     </table>
   </main>
   <script>
-
 const firebaseConfig = {
   apiKey: "AIzaSyDSZohtnPXem6m7f6A63KjXTQMUUFNk0Cg",
   authDomain: "ghost-entrance.firebaseapp.com",
@@ -172,6 +177,7 @@ const countryList = [
   {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
 ];
 
+
 let regionPieChart, countryPieChart, countryTrendChartObj;
 
 // 国セレクトボックス初期化
@@ -189,6 +195,7 @@ function runFilter() {
   loadStatics(true);
   showCountryTrend();
 }
+
 function loadStatics(isFilter) {
   db.ref('country').get().then(snapshot => {
     if (!snapshot.exists()) return;
@@ -291,7 +298,8 @@ function loadStatics(isFilter) {
       totalTbody.innerHTML += `<tr${i === 0 ? ' class="highlight"' : ''}><td>${i+1}</td><td>${name}</td><td>${count}</td></tr>`;
     });
 
-    // 日別集計
+    // 日別集計（ここを割合表示対応）
+    const ratioMode = document.getElementById('ratioMode').checked;
     const dateMap = {};
     filtered.forEach(row => {
       if (!dateMap[row.date]) dateMap[row.date] = [];
@@ -299,6 +307,15 @@ function loadStatics(isFilter) {
     });
     const dateTbody = document.querySelector('#date-table tbody');
     dateTbody.innerHTML = '';
+    const dateTableTotalHeader = document.getElementById('date-table-total-header');
+    const dateTableMostHeader = document.getElementById('date-table-most-header');
+    if (ratioMode) {
+      dateTableTotalHeader.textContent = "割合最大国";
+      dateTableMostHeader.textContent = "割合（%）";
+    } else {
+      dateTableTotalHeader.textContent = "合計人数";
+      dateTableMostHeader.textContent = "最多国";
+    }
     Object.keys(dateMap).sort().reverse().forEach(date => {
       const rows = dateMap[date];
       const total = rows.reduce((a, b) => a + Number(b.count), 0);
@@ -311,7 +328,14 @@ function loadStatics(isFilter) {
         tmpMap[key] += Number(r.count);
       });
       const maxCountry = Object.entries(tmpMap).sort((a, b) => b[1] - a[1])[0];
-      dateTbody.innerHTML += `<tr><td>${date}</td><td>${total}</td><td>${maxCountry ? `${maxCountry[0]}（${maxCountry[1]}人）` : '-'}</td></tr>`;
+      if (ratioMode) {
+        // 割合表示
+        const percent = maxCountry && total > 0 ? ((maxCountry[1] / total) * 100).toFixed(1) : "-";
+        dateTbody.innerHTML += `<tr><td>${date}</td><td>${maxCountry ? maxCountry[0] : '-'}</td><td>${percent !== "-" ? percent + "%" : "-"}</td></tr>`;
+      } else {
+        // 人数表示
+        dateTbody.innerHTML += `<tr><td>${date}</td><td>${total}</td><td>${maxCountry ? `${maxCountry[0]}（${maxCountry[1]}人）` : '-'}</td></tr>`;
+      }
     });
 
     // 最新20件

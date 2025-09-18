@@ -2,56 +2,108 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>国別来場者記録</title>
+  <title>国別来場者入力</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: 'Noto Sans JP', sans-serif; background: #f4f8fb; margin: 0; }
     header { background: #3b82f6; color: #fff; padding: 24px 0; font-size: 26px; font-weight: bold; text-align: center; }
-    main { max-width: 800px; margin: 30px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(59,130,246,0.08); padding: 30px 20px; }
-    h2 { color: #2563eb; margin-top: 30px; }
-    .input-row { margin: 24px 0 18px 0; display: flex; gap: 24px; align-items: center; }
-    .input-row label { font-size: 16px; }
-    #country-panel {
+    .container { display: flex; max-width: 1100px; margin: 30px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(59,130,246,0.08); min-height: 700px; }
+    .left-list {
+      width: 320px;
+      border-right: 1px solid #e5e7eb;
+      padding: 32px 18px 32px 18px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 16px;
-      justify-content: center;
+      flex-direction: column;
+      background: #f8fafc;
     }
-    .country-btn {
-      width: 160px;
-      height: 80px;
+    .left-list-header {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 18px;
+      color: #2563eb;
+    }
+    .input-items {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 18px;
+    }
+    .input-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .input-item:last-child { border-bottom: none; }
+    .input-item-country {
+      font-size: 16px;
+      font-weight: bold;
+      color: #1e293b;
+      margin-left: 0;
+    }
+    .input-item-qty {
+      font-size: 15px;
+      color: #64748b;
+      margin-left: 8px;
+    }
+    .input-total {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1e293b;
+      text-align: right;
+      margin-top: 18px;
+      margin-bottom: 12px;
+    }
+    .main-area {
+      flex: 1;
+      padding: 32px 32px 32px 32px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .country-header {
       font-size: 20px;
       font-weight: bold;
-      border-radius: 16px;
-      margin-bottom: 8px;
+      margin-bottom: 18px;
+      color: #2563eb;
+    }
+    .input-row { margin: 0 0 18px 0; }
+    .input-row label { font-size: 16px; }
+    .country-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+    .country-btn {
+      background: #e0e7ff;
       border: none;
-      box-shadow: 0 2px 8px rgba(59,130,246,0.10);
-      background: linear-gradient(135deg, #e0e7ff 60%, #fff 100%);
-      position: relative;
-      transition: 0.15s;
+      border-radius: 0; /* 角丸なしで角ばった四角 */
+      font-size: 18px;
+      font-weight: 600;
+      padding: 0;
+      color: #2563eb;
       cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.07);
+      width: 100%;
+      height: 70px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      position: relative;
+      outline: none;
     }
     .country-btn.selected {
-      background: linear-gradient(135deg, #60a5fa 60%, #fff 100%);
+      background: #3b82f6;
       color: #fff;
       border: 2.5px solid #2563eb;
     }
     .country-flag-bg {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(59,130,246,0.10);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      margin-bottom: 4px;
+      font-size: 28px;
+      margin-bottom: 2px;
     }
     .country-btn .count {
       position: absolute;
@@ -64,71 +116,72 @@
       padding: 2px 10px;
       font-weight: bold;
     }
-    #confirm-btn {
-      font-size: 22px;
-      padding: 16px 40px;
-      background: #2563eb;
-      color: #fff;
+    .action-area {
+      display: flex;
+      justify-content: flex-end;
+      gap: 18px;
+      margin: 32px 0 0 0;
+    }
+    .square-btn {
+      width: 180px;
+      padding: 18px 0;
+      border-radius: 0;
       border: none;
-      border-radius: 14px;
+      background: #e0e7ff;
+      color: #2563eb;
+      font-size: 18px;
       font-weight: bold;
-      box-shadow: 0 2px 8px rgba(59,130,246,0.10);
+      margin-bottom: 0;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.07);
       cursor: pointer;
-      margin-top: 10px;
-      margin-bottom: 10px;
-      transition: 0.1s;
+      transition: background 0.2s, color 0.2s;
+      text-align: center;
     }
-    #confirm-btn:hover {
-      background: #1d4ed8;
+    .square-btn.main {
+      background: #3b82f6;
+      color: #fff;
+      border: 2px solid #2563eb;
     }
-    .stat-table { width: 100%; border-collapse: collapse; margin: 18px 0 30px 0; }
-    .stat-table th, .stat-table td { border: 1px solid #ccc; padding: 8px 10px; text-align: center; }
-    .stat-table th { background: #e0e7ff; }
-    .highlight { background: #fef9c3; }
-    .desc { color: #64748b; font-size: 15px; margin-bottom: 18px; }
+    .square-btn:hover {
+      background: #bae6fd;
+    }
     .msg { color: #2563eb; margin-left: 10px; }
-    @media (max-width: 700px) {
-      main { padding: 10px 2vw; }
-      .input-row { flex-direction: column; gap: 10px; }
-      #country-panel { gap: 8px; }
-      .country-btn { width: 100%; height: 60px; font-size: 17px; }
+    @media (max-width: 900px) {
+      .container { flex-direction: column; }
+      .left-list { width: 100%; border-right: none; border-bottom: 1px solid #e5e7eb; }
+      .main-area { padding: 18px; }
+      .action-area { flex-direction: column; align-items: stretch; }
+      .country-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <link rel="apple-touch-icon" href="country-thumb.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="country-thumb.png">
-  <link rel="manifest" href="manifest-country.json">
 </head>
 <body>
-  <header>国別来場者記録</header>
-  <main>
-    <div class="desc">
-      各国の来場者数をパネルで選択して記録できます。<br>
-      日付を入力し、国パネルを人数分押して「確定」ボタンを押してください。
+  <header>国別来場者入力</header>
+  <div class="container">
+    <!-- 左側：入力リスト -->
+    <div class="left-list">
+      <div>
+        <div class="left-list-header">入力リスト</div>
+        <div class="input-items" id="inputItems"></div>
+        <div class="input-total" id="inputTotal">合計 0件</div>
+      </div>
     </div>
-    <div class="input-row">
-      <label>日付: <input type="date" id="date-input"></label>
+    <!-- 右側：国パネル -->
+    <div class="main-area">
+      <div class="country-header">国別来場者入力</div>
+      <div class="input-row">
+        <label>日付: <input type="date" id="date-input"></label>
+      </div>
+      <div class="country-grid" id="countryGrid"></div>
+      <div class="action-area">
+        <button class="square-btn" onclick="clearPanel()">クリア</button>
+        <button class="square-btn main" onclick="submitData()">送信</button>
+        <span id="msg" class="msg"></span>
+      </div>
     </div>
-    <div id="country-panel"></div>
-    <div style="margin-bottom:24px; text-align:center;">
-      <button id="confirm-btn" onclick="confirmPanel()">確定</button>
-      <span id="msg" class="msg"></span>
-    </div>
-    <h2>本日の記録</h2>
-    <table class="stat-table">
-      <thead>
-        <tr>
-          <th>日付</th>
-          <th>時間</th>
-          <th>国</th>
-          <th>人数</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="country-table-body"></tbody>
-    </table>
-  </main>
+  </div>
   <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDSZohtnPXem6m7f6A63KjXTQMUUFNk0Cg",
@@ -226,7 +279,7 @@ const panelCountryIndexes = [
 
 const topCountryList = panelCountryIndexes.map(idx => countryList[idx]);
 let panelCounts = Array(topCountryList.length).fill(0);
-let countryData = [];
+let inputList = [];
 
 // 日付デフォルト自動入力（7時までは前日、それ以降は当日）
 function setDefaultDate() {
@@ -241,9 +294,9 @@ function setDefaultDate() {
   document.getElementById('date-input').value = `${yyyy}-${mm}-${dd}`;
 }
 
-// 国パネル生成（均等な長方形・複数回押し対応・デザイン強化）
+// 国パネル生成（角ばった四角・複数回押し対応）
 function renderCountryPanel() {
-  const panel = document.getElementById('country-panel');
+  const panel = document.getElementById('countryGrid');
   panel.innerHTML = '';
   topCountryList.forEach((c, idx) => {
     const btn = document.createElement('button');
@@ -256,10 +309,79 @@ function renderCountryPanel() {
     `;
     btn.onclick = () => {
       panelCounts[idx]++;
+      // 左リストに追加
+      const existIdx = inputList.findIndex(item => item.idx === idx);
+      if (existIdx >= 0) {
+        inputList[existIdx].qty++;
+      } else {
+        inputList.push({ idx, qty: 1 });
+      }
       renderCountryPanel();
+      renderInputList();
     };
     panel.appendChild(btn);
   });
+}
+
+// 左側リスト描画
+function renderInputList() {
+  const area = document.getElementById('inputItems');
+  area.innerHTML = '';
+  inputList.forEach((item, i) => {
+    const c = topCountryList[item.idx];
+    area.innerHTML += `
+      <div class="input-item">
+        <span>
+          <span class="input-item-country">${c.flag} ${c.jp}</span>
+          <span class="input-item-qty">×${item.qty}</span>
+        </span>
+        <button onclick="removeInput(${i})" style="background:#f87171;color:#fff;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;">削除</button>
+      </div>
+    `;
+  });
+  document.getElementById('inputTotal').textContent = `合計 ${inputList.reduce((a, b) => a + b.qty, 0)}件`;
+}
+
+// 入力削除
+function removeInput(i) {
+  const idx = inputList[i].idx;
+  panelCounts[idx] = 0;
+  inputList.splice(i, 1);
+  renderCountryPanel();
+  renderInputList();
+}
+
+// クリア
+function clearPanel() {
+  panelCounts = Array(topCountryList.length).fill(0);
+  inputList = [];
+  renderCountryPanel();
+  renderInputList();
+  document.getElementById('msg').textContent = '';
+}
+
+// 送信
+function submitData() {
+  const date = document.getElementById('date-input').value;
+  if (!date) {
+    document.getElementById('msg').textContent = '日付を入力してください';
+    return;
+  }
+  if (inputList.length === 0) {
+    document.getElementById('msg').textContent = '国を選択してください';
+    return;
+  }
+  inputList.forEach(item => {
+    const time = getNowTimeStr();
+    db.ref('country').push({
+      date,
+      countryIdx: panelCountryIndexes[item.idx], // countryListのインデックスを保存
+      count: item.qty,
+      time
+    });
+  });
+  clearPanel();
+  document.getElementById('msg').textContent = '送信しました';
 }
 
 // 現在時刻（hh:mm）取得
@@ -268,92 +390,11 @@ function getNowTimeStr() {
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 
-// 確定ボタンでまとめて登録
-function confirmPanel() {
-  const date = document.getElementById('date-input').value;
-  if (!date) {
-    document.getElementById('msg').textContent = '日付を入力してください';
-    return;
-  }
-  let any = false;
-  panelCounts.forEach((count, idx) => {
-    if (count > 0) {
-      any = true;
-      const time = getNowTimeStr();
-      db.ref('country').push({
-        date,
-        countryIdx: panelCountryIndexes[idx], // countryListのインデックスを保存
-        count,
-        time
-      });
-    }
-  });
-  if (!any) {
-    document.getElementById('msg').textContent = '国を選択してください';
-    return;
-  }
-  panelCounts = Array(topCountryList.length).fill(0);
-  renderCountryPanel();
-  document.getElementById('msg').textContent = '記録しました';
-  loadCountryData();
-}
-
-// データ取得・テーブル表示
-function loadCountryData() {
-  db.ref('country').get().then(snapshot => {
-    if (!snapshot.exists()) return;
-    countryData = [];
-    const obj = snapshot.val();
-    Object.keys(obj).forEach(key => {
-      countryData.push({ ...obj[key], key });
-    });
-    renderTable();
-  });
-}
-
-// テーブル描画
-function renderTable() {
-  const tbody = document.getElementById('country-table-body');
-  tbody.innerHTML = '';
-  const selectedDate = document.getElementById('date-input').value;
-  const filtered = countryData
-    .map((row, idx) => ({ ...row, _originalIdx: idx }))
-    .filter(row => row.date === selectedDate)
-    .reverse();
-
-  filtered.forEach((row) => {
-    const c = countryList[row.countryIdx];
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${row.date}</td>
-      <td>${row.time || ''}</td>
-      <td>${c ? `${c.flag} ${c.jp} (${c.en})` : '不明'}</td>
-      <td>${row.count}</td>
-      <td>
-        <button onclick="deleteRow(${row._originalIdx})">削除</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// 削除
-function deleteRow(idx) {
-  const key = countryData[idx].key;
-  if (!key) return;
-  db.ref('country/' + key).remove().then(() => {
-    loadCountryData();
-  });
-}
-
-// 日付変更時にテーブル再描画
-document.getElementById('date-input').addEventListener('change', renderTable);
-
-// 初期表示（デフォルト日付セット・パネル描画・データ取得）
+// 初期表示
 window.addEventListener('DOMContentLoaded', () => {
   setDefaultDate();
   renderCountryPanel();
-  loadCountryData();
+  renderInputList();
 });
   </script>
 </body>
