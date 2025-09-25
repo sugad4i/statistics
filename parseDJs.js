@@ -7,22 +7,27 @@ export function parseDJs(text) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // DJ名と人数行（例: N.kohkey 1）
-    if (line.match(/^\S+ \d+$/)) {
+    // DJ名と数字行（例: "N.kohkey 1", "サワディー 2"）
+    if (line.match(/^\S+\s\d+$/)) {
       const [nameRaw] = line.split(" ");
-      const safeName = nameRaw.replaceAll(".", "_");  // ← ここで変換
+      const safeName = nameRaw.replaceAll(".", "_");
       currentName = safeName;
       result[safeName] = { guest: 0, free: 0 };
     }
 
-    // (ゲストX フリーY)
-    else if (line.match(/\(ゲスト\d+\sフリー\d+\)/)) {
+    // ゲスト・フリー人数（例: "(ゲスト1 フリー0)"）
+    else if (line.match(/^\(ゲスト\d+\sフリー\d+\)$/)) {
       const guest = parseInt(line.match(/ゲスト(\d+)/)[1]);
       const free = parseInt(line.match(/フリー(\d+)/)[1]);
       if (currentName) {
         result[currentName].guest = guest;
         result[currentName].free = free;
       }
+    }
+
+    // その他の行（総数、IN/OUT、ドリチケなど）は無視
+    else {
+      continue;
     }
   }
 
