@@ -8,37 +8,26 @@ export function parseDJs(text) {
     let line = lines[i]
       .replaceAll("（", "(")
       .replaceAll("）", ")")
-      .replaceAll("　", " ") // 全角スペース → 半角に
+      .replaceAll("　", " ") // 全角スペース→半角
       .trim();
 
-    // パターン①: 1行に名前 + 数字 + カッコ付き
-    if (line.match(/^\S.*\d+\(ゲスト\d+フリー ?\d+\)$/)) {
-      const name = line.replace(/\d+\(ゲスト\d+フリー ?\d+\)$/, "").trim();
-      const safeName = name.replaceAll(".", "_");
-
-      const guest = parseInt(line.match(/ゲスト(\d+)/)?.[1] || "0");
-      const free = parseInt(line.match(/フリー ?(\d+)/)?.[1] || "0");
-
-      result[safeName] = { guest, free };
-    }
-
-    // パターン②: 名前だけの行（次の行にデータがある）
-    else if (!line.includes("ゲスト") && !line.includes("フリー") && !line.includes("(")) {
-      const name = line.trim();
-      const safeName = name.replaceAll(".", "_");
+    // 名前だけの行（次の行にデータがあるパターン）
+    if (!line.includes("ゲスト") && !line.includes("フリー") && !line.includes("(")) {
+      const safeName = line.replaceAll(".", "_");
       currentName = safeName;
-      result[safeName] = { guest: 0, free: 0 };
+      result[currentName] = { guest: 0, free: 0 };
+      continue;
     }
 
-    // パターン③: "(ゲストXフリーY)" のみの行（前の行の名前に紐づけ）
-    else if (line.match(/\(ゲスト\d+フリー ?\d+\)/)) {
-      const guest = parseInt(line.match(/ゲスト(\d+)/)?.[1] || "0");
-      const free = parseInt(line.match(/フリー ?(\d+)/)?.[1] || "0");
+    // データ行（例: 6(ゲスト6フリー 0)）
+    const pattern = /^(\d*)?\(?ゲスト(\d+)\s?フリー\s?(\d+)\)?$/;
+    const match = line.match(pattern);
 
-      if (currentName && result[currentName]) {
-        result[currentName].guest = guest;
-        result[currentName].free = free;
-      }
+    if (match && currentName) {
+      const guest = parseInt(match[2]);
+      const free = parseInt(match[3]);
+      result[currentName].guest = guest;
+      result[currentName].free = free;
     }
   }
 
