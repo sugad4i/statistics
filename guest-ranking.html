@@ -50,6 +50,18 @@
 
     let rawData = [];
 
+    // 表記ゆれを統一するマップ
+    const djAliases = {
+      "リョウタ": "リョータ",
+      "ショウタ": "ショータ",
+      "N.kohkey": "n.kohkey",
+      "n.kohkey": "n.kohkey"
+    };
+
+    function normalizeDJName(name) {
+      return djAliases[name] || name;
+    }
+
     async function fetchData() {
       const snapshot = await get(ref(db, 'dj_summary'));
       if (!snapshot.exists()) return;
@@ -58,9 +70,10 @@
 
       for (const date in data) {
         for (const dj in data[date]) {
+          const normalized = normalizeDJName(dj);
           const guest = data[date][dj]?.guest || 0;
           const free = data[date][dj]?.free || 0;
-          rawData.push({ date, dj, guest, free });
+          rawData.push({ date, dj: normalized, guest, free });
         }
       }
       applyFilter();
