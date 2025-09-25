@@ -7,14 +7,15 @@ export function parseDJs(text) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // 例: "TOMSAURUS 2" → 名前だけ使う
+    // DJ名と人数行（例: N.kohkey 1）
     if (line.match(/^\S+ \d+$/)) {
-      const [name] = line.split(" ");
-      currentName = name;
-      result[currentName] = { guest: 0, free: 0 };
+      const [nameRaw] = line.split(" ");
+      const safeName = nameRaw.replaceAll(".", "_");  // ← ここで変換
+      currentName = safeName;
+      result[safeName] = { guest: 0, free: 0 };
     }
 
-    // 例: "(ゲスト2 フリー0)"
+    // (ゲストX フリーY)
     else if (line.match(/\(ゲスト\d+\sフリー\d+\)/)) {
       const guest = parseInt(line.match(/ゲスト(\d+)/)[1]);
       const free = parseInt(line.match(/フリー(\d+)/)[1]);
