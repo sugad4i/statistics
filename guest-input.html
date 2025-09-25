@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>DJゲスト集計フォーム</title>
+</head>
+<body>
+  <h1>DJゲスト集計</h1>
+  <label>日付: <input type="date" id="date" /></label><br><br>
+  <textarea id="djText" rows="15" cols="60" placeholder="TOMSAURUS 2\n(ゲスト2 フリー0)\n..."></textarea><br><br>
+  <button id="submitBtn">送信</button>
+
+  <!-- モジュールとして読み込み -->
+  <script type="module">
+    import { db, ref, set } from './firebase-config.js';
+    import { parseDJs } from './parseDJs.js';
+
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const date = document.getElementById('date').value;
+      const text = document.getElementById('djText').value;
+
+      if (!date || !text) {
+        alert('日付とテキストを入力してください');
+        return;
+      }
+
+      const parsed = parseDJs(text);  // guestとfreeのみ
+      const path = `dj_summary/${date}`;
+
+      try {
+        await set(ref(db, path), parsed);
+        alert('Firebaseに保存しました！');
+      } catch (e) {
+        alert('保存失敗: ' + e.message);
+      }
+    });
+  </script>
+</body>
+</html>
