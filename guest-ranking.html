@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>DJゲストランキング</title>
+  <title>ゲスト数集計</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -136,7 +136,7 @@
   </script>
 </head>
 <body>
-  <h1>DJ別来場者ランキング</h1>
+  <h1>ゲスト数集計</h1>
 
   <div class="filters">
     <label>開始日: <input type="date" id="startDate"></label>
@@ -148,9 +148,9 @@
   <table>
     <thead>
       <tr>
-        <th>DJ名</th>
+        <th>名前</th>
         <th>1日平均ゲスト数</th>
-        <th>出演日数</th>
+        <th>出勤日数</th>
       </tr>
     </thead>
     <tbody id="guestRankBody"></tbody>
@@ -160,9 +160,9 @@
   <table>
     <thead>
       <tr>
-        <th>DJ名</th>
+        <th>名前</th>
         <th>1日平均ゲスト+フリー数</th>
-        <th>出演日数</th>
+        <th>出勤日数</th>
       </tr>
     </thead>
     <tbody id="totalRankBody"></tbody>
