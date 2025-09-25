@@ -7,27 +7,27 @@ export function parseDJs(text) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // DJ名と数字行（例: "N.kohkey 1", "サワディー 2"）
-    if (line.match(/^\S+\s\d+$/)) {
-      const [nameRaw] = line.split(" ");
+    // 例: "JUN TANAKA 4" ← 最後のスペースで区切る
+    if (line.match(/^\S.*\s\d+$/)) {
+      const lastSpace = line.lastIndexOf(" ");
+      const nameRaw = line.slice(0, lastSpace);
       const safeName = nameRaw.replaceAll(".", "_");
       currentName = safeName;
       result[safeName] = { guest: 0, free: 0 };
     }
 
-    // ゲスト・フリー人数（例: "(ゲスト1 フリー0)"）
-    else if (line.match(/^\(ゲスト\d+\sフリー\d+\)$/)) {
-      const guest = parseInt(line.match(/ゲスト(\d+)/)[1]);
-      const free = parseInt(line.match(/フリー(\d+)/)[1]);
-      if (currentName) {
+    // 例: "(ゲスト2 フリー2)" or "(ゲスト32フリー0)" も対応
+    else if (line.startsWith("(") && line.endsWith(")")) {
+      const guestMatch = line.match(/ゲスト(\d+)/);
+      const freeMatch = line.match(/フリー(\d+)/);
+
+      const guest = guestMatch ? parseInt(guestMatch[1]) : 0;
+      const free = freeMatch ? parseInt(freeMatch[1]) : 0;
+
+      if (currentName && result[currentName]) {
         result[currentName].guest = guest;
         result[currentName].free = free;
       }
-    }
-
-    // その他の行（総数、IN/OUT、ドリチケなど）は無視
-    else {
-      continue;
     }
   }
 
