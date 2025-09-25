@@ -5,24 +5,35 @@ export function parseDJs(text) {
   let currentName = null;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    let line = lines[i]
+      .replaceAll("（", "(")
+      .replaceAll("）", ")")
+      .replaceAll("　", " ") // 全角スペース → 半角に
+      .trim();
 
-    // 例: "JUN TANAKA 4" ← 最後のスペースで区切る
-    if (line.match(/^\S.*\s\d+$/)) {
-      const lastSpace = line.lastIndexOf(" ");
-      const nameRaw = line.slice(0, lastSpace);
-      const safeName = nameRaw.replaceAll(".", "_");
+    // パターン①: 1行に名前 + 数字 + カッコ付き
+    if (line.match(/^\S.*\d+\(ゲスト\d+フリー ?\d+\)$/)) {
+      const name = line.replace(/\d+\(ゲスト\d+フリー ?\d+\)$/, "").trim();
+      const safeName = name.replaceAll(".", "_");
+
+      const guest = parseInt(line.match(/ゲスト(\d+)/)?.[1] || "0");
+      const free = parseInt(line.match(/フリー ?(\d+)/)?.[1] || "0");
+
+      result[safeName] = { guest, free };
+    }
+
+    // パターン②: 名前だけの行（次の行にデータがある）
+    else if (!line.includes("ゲスト") && !line.includes("フリー") && !line.includes("(")) {
+      const name = line.trim();
+      const safeName = name.replaceAll(".", "_");
       currentName = safeName;
       result[safeName] = { guest: 0, free: 0 };
     }
 
-    // 例: "(ゲスト2 フリー2)" or "(ゲスト32フリー0)" も対応
-    else if (line.startsWith("(") && line.endsWith(")")) {
-      const guestMatch = line.match(/ゲスト(\d+)/);
-      const freeMatch = line.match(/フリー(\d+)/);
-
-      const guest = guestMatch ? parseInt(guestMatch[1]) : 0;
-      const free = freeMatch ? parseInt(freeMatch[1]) : 0;
+    // パターン③: "(ゲストXフリーY)" のみの行（前の行の名前に紐づけ）
+    else if (line.match(/\(ゲスト\d+フリー ?\d+\)/)) {
+      const guest = parseInt(line.match(/ゲスト(\d+)/)?.[1] || "0");
+      const free = parseInt(line.match(/フリー ?(\d+)/)?.[1] || "0");
 
       if (currentName && result[currentName]) {
         result[currentName].guest = guest;
