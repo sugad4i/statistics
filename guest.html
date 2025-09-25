@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>名前別 出数合計 集計ツール</title>
+</head>
+<body>
+  <h1>名前別 出数合計 集計</h1>
+  <input type="file" id="csvInput" multiple accept=".csv" />
+  <button onclick="processCSV()">集計開始</button>
+  <pre id="result"></pre>
+
+  <script>
+    const targetNames = [
+      "AR", "TAISHI", "JUS", "FreshNess-Cut", "Tomsaurus", "WANNABE", "KORIN", "GATO", "B=BALL",
+      "MINAMI", "REX", "TACT", "MITSURU", "KANAME",
+      "タクミ", "ショウタ", "ニア", "N.kohkey", "サワディー", "シンヤ", "ジュリアン",
+      "sho", "shota", "ケイヤ", "マサキ", "Tomoyo", "Kiii", "Vincent", "fullphilz",
+      "コウキ", "ユウスケ", "ユウスケ（若い方）", "リョウタ"
+    ];
+
+    function processCSV() {
+      const input = document.getElementById('csvInput');
+      const result = document.getElementById('result');
+      const totals = {};
+      targetNames.forEach(name => totals[name] = 0);
+
+      if (!input.files.length) {
+        result.textContent = "CSVファイルを選択してください。";
+        return;
+      }
+
+      const files = Array.from(input.files);
+      let filesProcessed = 0;
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const text = e.target.result;
+          const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+          const headers = lines[0].split(',');
+
+          const menuIndex = headers.findIndex(h => h.includes("メニュー名"));
+          const countIndex = headers.findIndex(h => h.includes("出数合計"));
+
+          if (menuIndex === -1 || countIndex === -1) {
+            result.textContent += `ファイル「${file.name}」に必要な列が見つかりません。\n`;
+            filesProcessed++;
+            if (filesProcessed === files.length) showTotals(result, totals);
+            return;
+          }
+
+          for (let i = 1; i < lines.length; i++) {
+            const row = lines[i].split(',');
+            if (row.length <= Math.max(menuIndex, countIndex)) continue;
+
+            const menu = row[menuIndex];
+            const raw = row[countIndex];
+            const count = parseInt(raw.replace(/[^\d]/g, '')) || 0;
+
+            targetNames.forEach(name => {
+              if (menu && menu.includes(name)) {
+                totals[name] += count;
+              }
+            });
+          }
+
+          filesProcessed++;
+          if (filesProcessed === files.length) showTotals(result, totals);
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    function showTotals(resultElement, totals) {
+      const output = Object.entries(totals)
+        .filter(([_, count]) => count > 0)
+        .map(([name, count]) => `${name}: ${count}`)
+        .join('\n');
+      resultElement.textContent = output || "該当データがありませんでした。";
+    }
+  </script>
+</body>
+</html>
