@@ -2,100 +2,278 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>国別来場者統計</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>国別来場者入力</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
   <style>
     body { font-family: 'Noto Sans JP', sans-serif; background: #f4f8fb; margin: 0; }
     header { background: #3b82f6; color: #fff; padding: 24px 0; font-size: 26px; font-weight: bold; text-align: center; }
-    main { max-width: 800px; margin: 30px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(59,130,246,0.08); padding: 30px 20px; }
-    h2 { color: #2563eb; margin-top: 30px; }
-    .stat-table { width: 100%; border-collapse: collapse; margin: 18px 0 30px 0; }
-    .stat-table th, .stat-table td { border: 1px solid #ccc; padding: 8px 10px; text-align: center; }
-    .stat-table th { background: #e0e7ff; }
-    .highlight { background: #fef9c3; }
-    .desc { color: #64748b; font-size: 15px; margin-bottom: 18px; }
-    #reload-btn { margin-bottom: 18px; }
-    .chart-area { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; margin: 30px 0; }
-    .chart-area > div { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px; }
-    .chart-area h3 { text-align: center; margin: 0 0 10px 0; font-size: 16px; }
-    .filter-area { margin-bottom: 18px; text-align: center; }
-    .filter-area label { margin: 0 8px; }
-    .filter-area button { margin-left: 8px; background: #3b82f6; color: #fff; border: none; border-radius: 6px; padding: 6px 18px; font-size: 1rem; font-weight: bold; cursor: pointer; }
-    .filter-area button:hover { background: #2563eb; }
-    .toggle-area { margin-bottom: 18px; text-align: center; }
-    .toggle-area label { font-size: 15px; color: #2563eb; margin-left: 8px; }
+    .container { display: flex; max-width: 1100px; margin: 30px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(59,130,246,0.08); min-height: 700px; }
+    .left-list {
+      width: 320px;
+      border-right: 1px solid #e5e7eb;
+      padding: 32px 18px;
+      display: flex;
+      flex-direction: column;
+      background: #f8fafc;
+    }
+    .left-list-header {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 18px;
+      color: #2563eb;
+    }
+    .input-items {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 18px;
+    }
+    .input-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .input-item:last-child { border-bottom: none; }
+    .input-item-country {
+      font-size: 16px;
+      font-weight: bold;
+      color: #1e293b;
+    }
+    .input-item-qty {
+      font-size: 15px;
+      color: #64748b;
+      margin-left: 8px;
+    }
+    .input-total {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1e293b;
+      text-align: right;
+      margin-top: 18px;
+    }
+    .main-area {
+      flex: 1;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .country-header {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 18px;
+      color: #2563eb;
+    }
+    .input-row { margin: 0 0 18px 0; }
+    .input-row label { font-size: 16px; }
+    .country-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+    .country-btn {
+      background: #e0e7ff;
+      border: none;
+      border-radius: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #2563eb;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.07);
+      width: 100%;
+      height: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      outline: none;
+    }
+    .country-btn.selected {
+      background: #3b82f6;
+      color: #fff;
+      border: 2.5px solid #2563eb;
+    }
+    .country-flag-bg {
+      font-size: 28px;
+      margin-bottom: 2px;
+    }
+    .country-btn .count {
+      position: absolute;
+      top: 8px;
+      right: 14px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 15px;
+      border-radius: 10px;
+      padding: 2px 10px;
+      font-weight: bold;
+    }
+    .action-area {
+      display: flex;
+      justify-content: flex-end;
+      gap: 18px;
+      margin-top: auto;
+    }
+    .square-btn {
+      width: 180px;
+      padding: 18px 0;
+      border-radius: 0;
+      border: none;
+      background: #e0e7ff;
+      color: #2563eb;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.07);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      text-align: center;
+    }
+    .square-btn.main {
+      background: #3b82f6;
+      color: #fff;
+      border: 2px solid #2563eb;
+    }
+    .square-btn:hover {
+      background: #bae6fd;
+    }
+    .msg { color: #2563eb; margin-left: 10px; align-self: center; }
+    .history-area {
+      margin-top: 40px;
+    }
+    .history-area h2 {
+      font-size: 18px;
+      color: #2563eb;
+      margin-bottom: 12px;
+    }
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .history-table th,
+    .history-table td {
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .history-table th {
+      background: #e0e7ff;
+      color: #1e293b;
+      font-weight: 600;
+    }
+    .history-table td button {
+      background: #f87171;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    .ranking-section {
+      max-width: 1100px;
+      margin: 0 auto 40px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(59,130,246,0.08);
+      padding: 30px;
+    }
+    .ranking-section h2 {
+      font-size: 20px;
+      color: #2563eb;
+      margin-bottom: 18px;
+    }
+    .filter-area {
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .filter-area label {
+      margin: 0 8px;
+    }
+    .filter-area button {
+      margin-left: 8px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 18px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .filter-area button:hover {
+      background: #2563eb;
+    }
+    .stat-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0 30px 0;
+    }
+    .stat-table th,
+    .stat-table td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+      text-align: center;
+    }
+    .stat-table th {
+      background: #e0e7ff;
+    }
+    .highlight {
+      background: #fef9c3;
+    }
+    @media (max-width: 900px) {
+      .container { flex-direction: column; }
+      .left-list { width: 100%; border-right: none; border-bottom: 1px solid #e5e7eb; }
+      .main-area { padding: 18px; }
+      .action-area { flex-direction: column; align-items: stretch; }
+      .country-grid { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="apple-touch-icon" href="country-statics-thumb.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="country-statics-thumb.png">
-  <link rel="manifest" href="manifest-country-statics.json">
 </head>
 <body>
-  <header>国別来場者統計</header>
-  <main>
-    <div class="desc">
-      <button id="reload-btn" onclick="loadStatics()">最新データで再集計</button>
-      <br>
+  <header>国別来場者入力</header>
+  <div class="container">
+    <div class="left-list">
+      <div class="left-list-header">入力リスト</div>
+      <div class="input-items" id="inputItems"></div>
+      <div class="input-total" id="inputTotal">合計 0件</div>
     </div>
-
-    <div class="filter-area">
-      <label>開始日: <input type="date" id="filter-start"></label>
-      <label>終了日: <input type="date" id="filter-end"></label>
-      <br>
-      <label>
-        国選択:
-        <select id="country-select">
-          <option value="">（全て）</option>
-        </select>
-      </label>
-      <button onclick="runFilter()">絞り込み</button>
-    </div>
-    <div class="toggle-area">
-      <input type="checkbox" id="ratioMode" onchange="runFilter()">
-      <label for="ratioMode">日別集計を「割合（%）」で表示</label>
-    </div>
-
-    <div class="chart-area">
-      <div>
-        <h3>地域別 円グラフ</h3>
-        <canvas id="regionPieChart" width="300" height="300"></canvas>
+    <div class="main-area">
+      <div class="country-header">国別来場者入力</div>
+      <div class="input-row">
+        <label>日付: <input type="date" id="date-input"></label>
       </div>
-      <div>
-        <h3>国別ランキング 円グラフ</h3>
-        <canvas id="countryPieChart" width="300" height="300"></canvas>
+      <div class="country-grid" id="countryGrid"></div>
+      <div class="action-area">
+        <button class="square-btn" onclick="clearPanel()">クリア</button>
+        <button class="square-btn main" onclick="submitData()">送信</button>
+        <span id="msg" class="msg"></span>
       </div>
-      <div>
-        <h3 id="trendTitle">国別入場数推移</h3>
-        <canvas id="countryTrendChart" width="600" height="300"></canvas>
+      <div class="history-area">
+        <h2>本日の履歴</h2>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>日付</th>
+              <th>時間</th>
+              <th>国</th>
+              <th>人数</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
       </div>
     </div>
-
-    <h2>累計ランキング</h2>
-    <table class="stat-table" id="total-table">
-      <thead>
-        <tr>
-          <th>順位</th>
-          <th>国</th>
-          <th>人数合計</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <h2>日別集計</h2>
-    <table class="stat-table" id="date-table">
-      <thead>
-        <tr>
-          <th>日付</th>
-          <th id="date-table-total-header">合計人数</th>
-          <th id="date-table-most-header">最多国</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
+  </div>
+  
+  <div class="ranking-section">
     <h2>指定日のランキング</h2>
     <div class="filter-area">
       <label>日付: <input type="date" id="ranking-date"></label>
@@ -112,20 +290,7 @@
       </thead>
       <tbody></tbody>
     </table>
-
-    <h2>最近の記録（最新20件）</h2>
-    <table class="stat-table" id="recent-table">
-      <thead>
-        <tr>
-          <th>日付</th>
-          <th>時間</th>
-          <th>国</th>
-          <th>人数</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </main>
+  </div>
 
   <script>
 const firebaseConfig = {
@@ -140,9 +305,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// countryList は country.html と同じ順序で維持してください（中身は省略）
 const countryList = [
-  // アジア
   {region:"アジア", flag:"🇰🇷", jp:"韓国", en:"South Korea"},
   {region:"アジア", flag:"🇨🇳", jp:"中国", en:"China"},
   {region:"アジア", flag:"🇹🇼", jp:"台湾", en:"Taiwan"},
@@ -163,7 +326,6 @@ const countryList = [
   {region:"アジア", flag:"🇱🇦", jp:"ラオス", en:"Laos"},
   {region:"アジア", flag:"🇧🇳", jp:"ブルネイ", en:"Brunei"},
   {region:"アジア", flag:"🇹🇱", jp:"東ティモール", en:"Timor-Leste"},
-  // 欧州
   {region:"欧州", flag:"🇬🇧", jp:"イギリス", en:"United Kingdom"},
   {region:"欧州", flag:"🇫🇷", jp:"フランス", en:"France"},
   {region:"欧州", flag:"🇩🇪", jp:"ドイツ", en:"Germany"},
@@ -179,20 +341,16 @@ const countryList = [
   {region:"欧州", flag:"🇵🇱", jp:"ポーランド", en:"Poland"},
   {region:"欧州", flag:"🇨🇿", jp:"チェコ", en:"Czech Republic"},
   {region:"欧州", flag:"🇧🇪", jp:"ベルギー", en:"Belgium"},
-  // 北米
   {region:"北米", flag:"🇺🇸", jp:"アメリカ", en:"United States"},
   {region:"北米", flag:"🇨🇦", jp:"カナダ", en:"Canada"},
-  // 中南米
   {region:"中南米", flag:"🇲🇽", jp:"メキシコ", en:"Mexico"},
   {region:"中南米", flag:"🇧🇷", jp:"ブラジル", en:"Brazil"},
   {region:"中南米", flag:"🇦🇷", jp:"アルゼンチン", en:"Argentina"},
   {region:"中南米", flag:"🇨🇱", jp:"チリ", en:"Chile"},
   {region:"中南米", flag:"🇵🇪", jp:"ペルー", en:"Peru"},
   {region:"中南米", flag:"🇨🇴", jp:"コロンビア", en:"Colombia"},
-  // オセアニア
   {region:"オセアニア", flag:"🇦🇺", jp:"オーストラリア", en:"Australia"},
   {region:"オセアニア", flag:"🇳🇿", jp:"ニュージーランド", en:"New Zealand"},
-  // 中東・アフリカ
   {region:"中東・アフリカ", flag:"🇹🇷", jp:"トルコ", en:"Turkey"},
   {region:"中東・アフリカ", flag:"🇸🇦", jp:"サウジアラビア", en:"Saudi Arabia"},
   {region:"中東・アフリカ", flag:"🇦🇪", jp:"アラブ首長国連邦", en:"United Arab Emirates"},
@@ -200,227 +358,173 @@ const countryList = [
   {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
 ];
 
+const panelCountryIndexes = [
+  35,1,0,21,20,43,36,4,25,23,22,10,27,45,6,8,44,37,46,47,26,28,9,3,2
+];
 
-let regionPieChart, countryPieChart, countryTrendChartObj;
+const topCountryList = panelCountryIndexes.map(idx => countryList[idx]);
+let panelCounts = Array(topCountryList.length).fill(0);
+let inputList = [];
+let historyList = [];
+let historyKeys = [];
 
-// 国セレクトボックス初期化
-window.addEventListener('DOMContentLoaded', () => {
-  const sel = document.getElementById('country-select');
-  countryList.forEach((c, idx) => {
-    const opt = document.createElement('option');
-    opt.value = idx;
-    opt.textContent = `${c.flag} ${c.jp} (${c.en})`;
-    sel.appendChild(opt);
-  });
-});
-
-function runFilter() {
-  loadStatics(true);
-  showCountryTrend();
+// 日付デフォルト自動入力（7時までは前日、それ以降は当日）
+function setDefaultDate() {
+  const now = new Date();
+  const dateObj = new Date(now);
+  if (now.getHours() < 7) {
+    dateObj.setDate(now.getDate() - 1);
+  }
+  const yyyy = dateObj.getFullYear();
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  document.getElementById('date-input').value = `${yyyy}-${mm}-${dd}`;
 }
 
-function loadStatics(isFilter) {
-  db.ref('country').once('value').then(snapshot => {
-    if (!snapshot.exists()) return;
-    const allData = [];
-    const obj = snapshot.val();
-    Object.keys(obj).forEach(key => {
-      allData.push({ ...obj[key], key });
-    });
-
-    // 期間フィルタ
-    let filtered = allData;
-    if (isFilter) {
-      const start = document.getElementById('filter-start').value;
-      const end = document.getElementById('filter-end').value;
-      filtered = allData.filter(row => {
-        if (!row.date) return false;
-        if (start && row.date < start) return false;
-        if (end && row.date > end) return false;
-        return true;
-      });
-    }
-
-    // 円グラフ用データ集計
-    // 地域別
-    const regionMap = {};
-    filtered.forEach(row => {
-      const c = countryList[row.countryIdx];
-      const region = c && c.region ? c.region : 'その他';
-      if (!regionMap[region]) regionMap[region] = 0;
-      regionMap[region] += Number(row.count);
-    });
-    const regionLabels = Object.keys(regionMap);
-    const regionData = Object.values(regionMap);
-
-    // 国別ランキング
-    const countryMap = {};
-    filtered.forEach(row => {
-      const c = countryList[row.countryIdx];
-      const key = c ? `${c.flag} ${c.jp}` : '不明';
-      if (!countryMap[key]) countryMap[key] = 0;
-      countryMap[key] += Number(row.count);
-    });
-    const sortedCountries = Object.entries(countryMap).sort((a, b) => b[1] - a[1]);
-    const countryLabels = sortedCountries.map(([name]) => name);
-    const countryDataArr = sortedCountries.map(([, count]) => count);
-
-    // 地域別円グラフ
-    if (regionPieChart) regionPieChart.destroy();
-    regionPieChart = new Chart(document.getElementById('regionPieChart'), {
-      type: 'pie',
-      data: {
-        labels: regionLabels,
-        datasets: [{
-          data: regionData,
-          backgroundColor: [
-            '#60a5fa', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#f472b6', '#facc15', '#38bdf8'
-          ],
-        }]
-      },
-      options: { plugins: { legend: { display: false } } }
-    });
-
-    // 国別ランキング円グラフ
-    if (countryPieChart) countryPieChart.destroy();
-    countryPieChart = new Chart(document.getElementById('countryPieChart'), {
-      type: 'pie',
-      data: {
-        labels: countryLabels,
-        datasets: [{
-          data: countryDataArr,
-          backgroundColor: [
-            '#60a5fa', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#f472b6', '#facc15', '#38bdf8',
-            '#818cf8', '#fb7185', '#bef264', '#fdba74', '#fcd34d', '#a3e635', '#fca5a5', '#c4b5fd'
-          ],
-        }]
-      },
-      options: { plugins: { legend: { display: false } } }
-    });
-
-    // 累計ランキング
-    const countryMap2 = {};
-    filtered.forEach(row => {
-      const c = countryList[row.countryIdx];
-      const key = `${c.flag} ${c.jp} (${c.en})`;
-      if (!countryMap2[key]) countryMap2[key] = 0;
-      countryMap2[key] += Number(row.count);
-    });
-    const sorted = Object.entries(countryMap2).sort((a, b) => b[1] - a[1]);
-    const totalTbody = document.querySelector('#total-table tbody');
-    totalTbody.innerHTML = '';
-    sorted.forEach(([name, count], i) => {
-      totalTbody.innerHTML += `<tr${i === 0 ? ' class="highlight"' : ''}><td>${i+1}</td><td>${name}</td><td>${count}</td></tr>`;
-    });
-
-    // 日別集計（割合表示対応）
-    const ratioMode = document.getElementById('ratioMode').checked;
-    const dateMap = {};
-    filtered.forEach(row => {
-      if (!dateMap[row.date]) dateMap[row.date] = [];
-      dateMap[row.date].push(row);
-    });
-    const dateTbody = document.querySelector('#date-table tbody');
-    dateTbody.innerHTML = '';
-    const dateTableTotalHeader = document.getElementById('date-table-total-header');
-    const dateTableMostHeader = document.getElementById('date-table-most-header');
-    if (ratioMode) {
-      dateTableTotalHeader.textContent = "割合最大国";
-      dateTableMostHeader.textContent = "割合（%）";
-    } else {
-      dateTableTotalHeader.textContent = "合計人数";
-      dateTableMostHeader.textContent = "最多国";
-    }
-    Object.keys(dateMap).sort().reverse().forEach(date => {
-      const rows = dateMap[date];
-      const total = rows.reduce((a, b) => a + Number(b.count), 0);
-      const tmpMap = {};
-      rows.forEach(r => {
-        const c = countryList[r.countryIdx];
-        const key = `${c.flag} ${c.jp} (${c.en})`;
-        if (!tmpMap[key]) tmpMap[key] = 0;
-        tmpMap[key] += Number(r.count);
-      });
-      const maxCountry = Object.entries(tmpMap).sort((a, b) => b[1] - a[1])[0];
-      if (ratioMode) {
-        const percent = maxCountry && total > 0 ? ((maxCountry[1] / total) * 100).toFixed(1) : "-";
-        dateTbody.innerHTML += `<tr><td>${date}</td><td>${maxCountry ? maxCountry[0] : '-'}</td><td>${percent !== "-" ? percent + "%" : "-"}</td></tr>`;
+// 国パネル生成
+function renderCountryPanel() {
+  const panel = document.getElementById('countryGrid');
+  panel.innerHTML = '';
+  topCountryList.forEach((c, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'country-btn' + (panelCounts[idx] ? ' selected' : '');
+    btn.innerHTML = `
+      <span class="country-flag-bg">${c.flag}</span>
+      <span>${c.jp}</span>
+      ${panelCounts[idx] ? `<span class="count">×${panelCounts[idx]}</span>` : ''}
+    `;
+    btn.onclick = () => {
+      panelCounts[idx]++;
+      const existIdx = inputList.findIndex(item => item.idx === idx);
+      if (existIdx >= 0) {
+        inputList[existIdx].qty++;
       } else {
-        dateTbody.innerHTML += `<tr><td>${date}</td><td>${total}</td><td>${maxCountry ? `${maxCountry[0]}（${maxCountry[1]}人）` : '-'}</td></tr>`;
+        inputList.push({ idx, qty: 1 });
       }
-    });
-
-    // 最近の記録（最新20件）
-    const recentTbody = document.querySelector('#recent-table tbody');
-    recentTbody.innerHTML = '';
-    filtered.slice(-20).reverse().forEach(row => {
-      const c = countryList[row.countryIdx];
-      recentTbody.innerHTML += `<tr>
-        <td>${row.date}</td>
-        <td>${row.time || ''}</td>
-        <td>${c.flag} ${c.jp} (${c.en})</td>
-        <td>${row.count}</td>
-      </tr>`;
-    });
+      renderCountryPanel();
+      renderInputList();
+    };
+    panel.appendChild(btn);
   });
 }
 
-// 国別入場数推移グラフ
-function showCountryTrend() {
-  db.ref('country').once('value').then(snapshot => {
-    if (!snapshot.exists()) return;
-    const allData = [];
-    const obj = snapshot.val();
-    Object.keys(obj).forEach(key => {
-      allData.push({ ...obj[key], key });
-    });
+// 左側リスト描画
+function renderInputList() {
+  const area = document.getElementById('inputItems');
+  area.innerHTML = '';
+  inputList.forEach((item, i) => {
+    const c = topCountryList[item.idx];
+    area.innerHTML += `
+      <div class="input-item">
+        <span>
+          <span class="input-item-country">${c.flag} ${c.jp}</span>
+          <span class="input-item-qty">×${item.qty}</span>
+        </span>
+        <button onclick="removeInput(${i})">削除</button>
+      </div>
+    `;
+  });
+  const total = inputList.reduce((sum, item) => sum + item.qty, 0);
+  document.getElementById('inputTotal').textContent = `合計 ${total}件`;
+}
 
-    // 期間フィルタ
-    const start = document.getElementById('filter-start').value;
-    const end = document.getElementById('filter-end').value;
-    let filtered = allData.filter(row => {
-      if (!row.date) return false;
-      if (start && row.date < start) return false;
-      if (end && row.date > end) return false;
-      return true;
-    });
+// 入力削除
+function removeInput(i) {
+  const entry = inputList[i];
+  if (!entry) return;
+  panelCounts[entry.idx] = Math.max(0, panelCounts[entry.idx] - entry.qty);
+  inputList.splice(i, 1);
+  renderCountryPanel();
+  renderInputList();
+}
 
-    // 国フィルタ
-    const selIdx = document.getElementById('country-select').value;
-    let trendData = {};
-    let countryName = "";
-    if (selIdx !== "") {
-      filtered = filtered.filter(row => String(row.countryIdx) === selIdx);
-      countryName = `${countryList[selIdx].flag} ${countryList[selIdx].jp} (${countryList[selIdx].en})`;
-    } else {
-      countryName = "全ての国";
+// クリア
+function clearPanel() {
+  panelCounts = Array(topCountryList.length).fill(0);
+  inputList = [];
+  renderCountryPanel();
+  renderInputList();
+  document.getElementById('msg').textContent = '';
+}
+
+// 送信
+function submitData() {
+  const date = document.getElementById('date-input').value;
+  if (!date) {
+    document.getElementById('msg').textContent = '日付を入力してください';
+    return;
+  }
+  if (inputList.length === 0) {
+    document.getElementById('msg').textContent = '国を選択してください';
+    return;
+  }
+  inputList.forEach(item => {
+    const time = getNowTimeStr();
+    db.ref('country').push({
+      date,
+      countryIdx: panelCountryIndexes[item.idx],
+      count: item.qty,
+      time
+    });
+  });
+  clearPanel();
+  document.getElementById('msg').textContent = '送信しました';
+  setTimeout(() => { document.getElementById('msg').textContent = ''; }, 2000);
+  loadHistory();
+  loadDailyRanking();
+}
+
+// 現在時刻（hh:mm）
+function getNowTimeStr() {
+  const d = new Date();
+  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+}
+
+// 履歴取得
+function loadHistory() {
+  const date = document.getElementById('date-input').value;
+  if (!date) return;
+  db.ref('country').orderByChild('date').equalTo(date).once('value').then(snapshot => {
+    historyList = [];
+    historyKeys = [];
+    if (snapshot.exists()) {
+      snapshot.forEach(child => {
+        historyList.push(child.val());
+        historyKeys.push(child.key);
+      });
     }
+    renderHistory();
+  });
+}
 
-    // 日付ごとに人数集計
-    filtered.forEach(row => {
-      if (!trendData[row.date]) trendData[row.date] = 0;
-      trendData[row.date] += Number(row.count);
-    });
+// 履歴描画
+function renderHistory() {
+  const tbody = document.getElementById('historyBody');
+  tbody.innerHTML = '';
+  const rows = historyList.map((row, i) => ({ row, key: historyKeys[i] })).reverse();
+  rows.forEach(item => {
+    const c = countryList[item.row.countryIdx];
+    const flagName = c ? `${c.flag} ${c.jp}` : '不明';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.row.date}</td>
+      <td>${item.row.time || '--:--'}</td>
+      <td>${flagName}</td>
+      <td>${item.row.count}</td>
+      <td><button onclick="deleteHistory('${item.key}')">削除</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
 
-    // グラフ描画
-    const labels = Object.keys(trendData).sort();
-    const dataArr = labels.map(date => trendData[date]);
-    document.getElementById('trendTitle').textContent = `国別入場数推移（${countryName}）`;
-    const ctx = document.getElementById('countryTrendChart').getContext('2d');
-    if (countryTrendChartObj) countryTrendChartObj.destroy();
-    countryTrendChartObj = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          { label: '入場数', data: dataArr, borderColor: '#3b82f6', backgroundColor: '#60a5fa22', fill: true }
-        ]
-      },
-      options: {
-        responsive: true,
-        scales: { y: { beginAtZero: true } }
-      }
-    });
+// 履歴削除
+function deleteHistory(key) {
+  if (!key) return;
+  if (!confirm('この履歴を削除しますか?')) return;
+  db.ref('country/' + key).remove().then(() => {
+    loadHistory();
+    loadDailyRanking();
   });
 }
 
@@ -500,15 +604,21 @@ function copyDailyRanking() {
       .sort((a, b) => b.count - a.count);
 
     let total = 0;
-    let text = `【指定日の国別ランキング】${date}\n\n順位\t国\t人数\n------------------------\n`;
+    let text = `【指定日の国別ランキング】${date}\n\n`;
     ranking.forEach((r, i) => {
       total += r.count;
-      text += `${i + 1}位\t${r.name}\t${r.count}人\n`;
+      const percent = ((r.count / total) * 100).toFixed(0);
+      text += `${i + 1}位\t${r.name}\t${r.count}人(${percent}%)\n`;
     });
-    text += `------------------------\n合計: ${total}人（${ranking.length}カ国）\n`;
+    text += `\n合計: ${total}人（${ranking.length}カ国）\n`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(() => alert('コピーしました')).catch(() => fallbackCopy(text));
+      navigator.clipboard.writeText(text).then(() => {
+        alert('コピーしました');
+      }).catch(err => {
+        console.error('コピーエラー:', err);
+        fallbackCopy(text);
+      });
     } else {
       fallbackCopy(text);
     }
@@ -526,12 +636,16 @@ function fallbackCopy(text) {
   ta.style.opacity = '0';
   document.body.appendChild(ta);
   ta.select();
-  try { document.execCommand('copy'); alert('コピーしました'); }
-  catch { alert('コピーに失敗しました'); }
+  try {
+    document.execCommand('copy');
+    alert('コピーしました');
+  } catch {
+    alert('コピーに失敗しました');
+  }
   document.body.removeChild(ta);
 }
 
-// 初期表示
+// 初期化
 function initRankingDate() {
   const pad = n => String(n).padStart(2, '0');
   const d = new Date();
@@ -544,8 +658,17 @@ function initRankingDate() {
   }
 }
 
-loadStatics();
-initRankingDate();
+// 初期表示
+window.addEventListener('DOMContentLoaded', () => {
+  setDefaultDate();
+  renderCountryPanel();
+  renderInputList();
+  loadHistory();
+  initRankingDate();
+});
+document.getElementById('date-input').addEventListener('change', () => {
+  loadHistory();
+});
   </script>
 </body>
 </html>
