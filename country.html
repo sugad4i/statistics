@@ -11,7 +11,7 @@
     .left-list {
       width: 320px;
       border-right: 1px solid #e5e7eb;
-      padding: 32px 18px 32px 18px;
+      padding: 32px 18px;
       display: flex;
       flex-direction: column;
       background: #f8fafc;
@@ -40,7 +40,6 @@
       font-size: 16px;
       font-weight: bold;
       color: #1e293b;
-      margin-left: 0;
     }
     .input-item-qty {
       font-size: 15px;
@@ -53,11 +52,10 @@
       color: #1e293b;
       text-align: right;
       margin-top: 18px;
-      margin-bottom: 12px;
     }
     .main-area {
       flex: 1;
-      padding: 32px 32px 32px 32px;
+      padding: 32px;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -79,10 +77,9 @@
     .country-btn {
       background: #e0e7ff;
       border: none;
-      border-radius: 0; /* 角丸なしで角ばった四角 */
+      border-radius: 0;
       font-size: 18px;
       font-weight: 600;
-      padding: 0;
       color: #2563eb;
       cursor: pointer;
       transition: background 0.2s, color 0.2s;
@@ -120,7 +117,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 18px;
-      margin: 32px 0 0 0;
+      margin-top: auto;
     }
     .square-btn {
       width: 180px;
@@ -131,7 +128,6 @@
       color: #2563eb;
       font-size: 18px;
       font-weight: bold;
-      margin-bottom: 0;
       box-shadow: 0 2px 8px rgba(59,130,246,0.07);
       cursor: pointer;
       transition: background 0.2s, color 0.2s;
@@ -145,7 +141,39 @@
     .square-btn:hover {
       background: #bae6fd;
     }
-    .msg { color: #2563eb; margin-left: 10px; }
+    .msg { color: #2563eb; margin-left: 10px; align-self: center; }
+    .history-area {
+      margin-top: 40px;
+    }
+    .history-area h2 {
+      font-size: 18px;
+      color: #2563eb;
+      margin-bottom: 12px;
+    }
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .history-table th,
+    .history-table td {
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .history-table th {
+      background: #e0e7ff;
+      color: #1e293b;
+      font-weight: 600;
+    }
+    .history-table td button {
+      background: #f87171;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
     @media (max-width: 900px) {
       .container { flex-direction: column; }
       .left-list { width: 100%; border-right: none; border-bottom: 1px solid #e5e7eb; }
@@ -160,15 +188,11 @@
 <body>
   <header>国別来場者入力</header>
   <div class="container">
-    <!-- 左側：入力リスト -->
     <div class="left-list">
-      <div>
-        <div class="left-list-header">入力リスト</div>
-        <div class="input-items" id="inputItems"></div>
-        <div class="input-total" id="inputTotal">合計 0件</div>
-      </div>
+      <div class="left-list-header">入力リスト</div>
+      <div class="input-items" id="inputItems"></div>
+      <div class="input-total" id="inputTotal">合計 0件</div>
     </div>
-    <!-- 右側：国パネル -->
     <div class="main-area">
       <div class="country-header">国別来場者入力</div>
       <div class="input-row">
@@ -180,7 +204,25 @@
         <button class="square-btn main" onclick="submitData()">送信</button>
         <span id="msg" class="msg"></span>
       </div>
+      <div class="history-area">
+        <h2>本日の履歴</h2>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>日付</th>
+              <th>時間</th>
+              <th>国</th>
+              <th>人数</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
     </div>
+  </div>
+  <div style="max-width: 1100px; margin: 0 auto 40px; text-align: center;">
+    <button class="square-btn main" style="width:300px;" onclick="exportTodayData()">今日のデータを出力</button>
   </div>
   <script>
 const firebaseConfig = {
@@ -248,43 +290,20 @@ const countryList = [
   {region:"中東・アフリカ", flag:"🇪🇬", jp:"エジプト", en:"Egypt"}
 ];
 
-// 表示したい国のcountryList内インデックスを指定
 const panelCountryIndexes = [
-  35, // アメリカ
-  1,  // 中国
-  0,  // 韓国
-  21, // フランス
-  20, // イギリス
-  43, // オーストラリア
-  36, // カナダ
-  4,  // タイ
-  25, // オランダ
-  23, // イタリア
-  22, // ドイツ
-  10, // インド
-  27, // スウェーデン
-  45, // トルコ
-  6,  // フィリピン
-  8,  // マレーシア
-  44, // ニュージーランド
-  37, // メキシコ
-  46, // サウジアラビア
-  47, // アラブ首長国連邦
-  26, // スイス
-  28, // ノルウェー
-  9,  // シンガポール
-  3,  // 香港
-  2   // 台湾
+  35,1,0,21,20,43,36,4,25,23,22,10,27,45,6,8,44,37,46,47,26,28,9,3,2
 ];
 
 const topCountryList = panelCountryIndexes.map(idx => countryList[idx]);
 let panelCounts = Array(topCountryList.length).fill(0);
 let inputList = [];
+let historyList = [];
+let historyKeys = [];
 
 // 日付デフォルト自動入力（7時までは前日、それ以降は当日）
 function setDefaultDate() {
   const now = new Date();
-  let dateObj = new Date(now);
+  const dateObj = new Date(now);
   if (now.getHours() < 7) {
     dateObj.setDate(now.getDate() - 1);
   }
@@ -294,7 +313,7 @@ function setDefaultDate() {
   document.getElementById('date-input').value = `${yyyy}-${mm}-${dd}`;
 }
 
-// 国パネル生成（角ばった四角・複数回押し対応）
+// 国パネル生成
 function renderCountryPanel() {
   const panel = document.getElementById('countryGrid');
   panel.innerHTML = '';
@@ -309,7 +328,6 @@ function renderCountryPanel() {
     `;
     btn.onclick = () => {
       panelCounts[idx]++;
-      // 左リストに追加
       const existIdx = inputList.findIndex(item => item.idx === idx);
       if (existIdx >= 0) {
         inputList[existIdx].qty++;
@@ -335,17 +353,19 @@ function renderInputList() {
           <span class="input-item-country">${c.flag} ${c.jp}</span>
           <span class="input-item-qty">×${item.qty}</span>
         </span>
-        <button onclick="removeInput(${i})" style="background:#f87171;color:#fff;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;">削除</button>
+        <button onclick="removeInput(${i})">削除</button>
       </div>
     `;
   });
-  document.getElementById('inputTotal').textContent = `合計 ${inputList.reduce((a, b) => a + b.qty, 0)}件`;
+  const total = inputList.reduce((sum, item) => sum + item.qty, 0);
+  document.getElementById('inputTotal').textContent = `合計 ${total}件`;
 }
 
 // 入力削除
 function removeInput(i) {
-  const idx = inputList[i].idx;
-  panelCounts[idx] = 0;
+  const entry = inputList[i];
+  if (!entry) return;
+  panelCounts[entry.idx] = Math.max(0, panelCounts[entry.idx] - entry.qty);
   inputList.splice(i, 1);
   renderCountryPanel();
   renderInputList();
@@ -375,19 +395,103 @@ function submitData() {
     const time = getNowTimeStr();
     db.ref('country').push({
       date,
-      countryIdx: panelCountryIndexes[item.idx], // countryListのインデックスを保存
+      countryIdx: panelCountryIndexes[item.idx],
       count: item.qty,
       time
     });
   });
   clearPanel();
   document.getElementById('msg').textContent = '送信しました';
+  setTimeout(() => { document.getElementById('msg').textContent = ''; }, 2000);
+  loadHistory();
 }
 
-// 現在時刻（hh:mm）取得
+// 現在時刻（hh:mm）
 function getNowTimeStr() {
   const d = new Date();
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+}
+
+// 履歴取得
+function loadHistory() {
+  const date = document.getElementById('date-input').value;
+  if (!date) return;
+  db.ref('country').orderByChild('date').equalTo(date).get().then(snapshot => {
+    historyList = [];
+    historyKeys = [];
+    if (snapshot.exists()) {
+      snapshot.forEach(child => {
+        historyList.push(child.val());
+        historyKeys.push(child.key);
+      });
+    }
+    renderHistory();
+  });
+}
+
+// 履歴描画
+function renderHistory() {
+  const tbody = document.getElementById('historyBody');
+  tbody.innerHTML = '';
+  const rows = historyList.map((row, i) => ({ row, key: historyKeys[i] })).reverse();
+  rows.forEach(item => {
+    const c = countryList[item.row.countryIdx];
+    const flagName = c ? `${c.flag} ${c.jp}` : '不明';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.row.date}</td>
+      <td>${item.row.time || '--:--'}</td>
+      <td>${flagName}</td>
+      <td>${item.row.count}</td>
+      <td><button onclick="deleteHistory('${item.key}')">削除</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 履歴削除
+function deleteHistory(key) {
+  if (!key) return;
+  if (!confirm('この履歴を削除しますか？')) return;
+  db.ref('country/' + key).remove().then(() => {
+    loadHistory();
+  });
+}
+
+// 今日のデータ出力（クリップボード）
+function exportTodayData() {
+  const date = document.getElementById('date-input').value;
+  if (!date) {
+    alert('日付を入力してください');
+    return;
+  }
+  db.ref('country').orderByChild('date').equalTo(date).get().then(snapshot => {
+    if (!snapshot.exists()) {
+      alert('データがありません');
+      return;
+    }
+    let textContent = `【国別来場者データ】${date}\n\n時間\t国\t人数\n------------------------\n`;
+    snapshot.forEach(child => {
+      const row = child.val();
+      const c = countryList[row.countryIdx];
+      textContent += `${row.time || '--:--'}\t${c ? c.jp : '不明'}\t${row.count}人\n`;
+    });
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textContent).then(() => {
+        alert('データをクリップボードにコピーしました');
+      }).catch(err => {
+        alert('コピーに失敗しました: ' + err);
+      });
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = textContent;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('データをクリップボードにコピーしました');
+    }
+  });
 }
 
 // 初期表示
@@ -395,6 +499,10 @@ window.addEventListener('DOMContentLoaded', () => {
   setDefaultDate();
   renderCountryPanel();
   renderInputList();
+  loadHistory();
+});
+document.getElementById('date-input').addEventListener('change', () => {
+  loadHistory();
 });
   </script>
 </body>
