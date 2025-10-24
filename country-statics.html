@@ -39,6 +39,7 @@
       <button id="reload-btn" onclick="loadStatics()">最新データで再集計</button>
       <br>
     </div>
+
     <div class="filter-area">
       <label>開始日: <input type="date" id="filter-start"></label>
       <label>終了日: <input type="date" id="filter-end"></label>
@@ -55,6 +56,7 @@
       <input type="checkbox" id="ratioMode" onchange="runFilter()">
       <label for="ratioMode">日別集計を「割合（%）」で表示</label>
     </div>
+
     <div class="chart-area">
       <div>
         <h3>地域別 円グラフ</h3>
@@ -69,6 +71,7 @@
         <canvas id="countryTrendChart" width="600" height="300"></canvas>
       </div>
     </div>
+
     <h2>累計ランキング</h2>
     <table class="stat-table" id="total-table">
       <thead>
@@ -80,6 +83,7 @@
       </thead>
       <tbody></tbody>
     </table>
+
     <h2>日別集計</h2>
     <table class="stat-table" id="date-table">
       <thead>
@@ -91,6 +95,24 @@
       </thead>
       <tbody></tbody>
     </table>
+
+    <h2>指定日のランキング</h2>
+    <div class="filter-area">
+      <label>日付: <input type="date" id="ranking-date"></label>
+      <button onclick="loadDailyRanking()">表示</button>
+      <button onclick="copyDailyRanking()">テキストをコピー</button>
+    </div>
+    <table class="stat-table" id="daily-ranking-table">
+      <thead>
+        <tr>
+          <th>順位</th>
+          <th>国</th>
+          <th>人数</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
     <h2>最近の記録（最新20件）</h2>
     <table class="stat-table" id="recent-table">
       <thead>
@@ -104,6 +126,7 @@
       <tbody></tbody>
     </table>
   </main>
+
   <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDSZohtnPXem6m7f6A63KjXTQMUUFNk0Cg",
@@ -117,7 +140,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// countryListはcountry.htmlと同じ内容をコピーしてください
+// countryList は country.html と同じ順序で維持してください（中身は省略）
 const countryList = [
   // アジア
   {region:"アジア", flag:"🇰🇷", jp:"韓国", en:"South Korea"},
@@ -197,7 +220,7 @@ function runFilter() {
 }
 
 function loadStatics(isFilter) {
-  db.ref('country').get().then(snapshot => {
+  db.ref('country').once('value').then(snapshot => {
     if (!snapshot.exists()) return;
     const allData = [];
     const obj = snapshot.val();
@@ -255,11 +278,7 @@ function loadStatics(isFilter) {
           ],
         }]
       },
-      options: {
-        plugins: {
-          legend: { display: false }
-        }
-      }
+      options: { plugins: { legend: { display: false } } }
     });
 
     // 国別ランキング円グラフ
@@ -276,11 +295,7 @@ function loadStatics(isFilter) {
           ],
         }]
       },
-      options: {
-        plugins: {
-          legend: { display: false }
-        }
-      }
+      options: { plugins: { legend: { display: false } } }
     });
 
     // 累計ランキング
@@ -298,7 +313,7 @@ function loadStatics(isFilter) {
       totalTbody.innerHTML += `<tr${i === 0 ? ' class="highlight"' : ''}><td>${i+1}</td><td>${name}</td><td>${count}</td></tr>`;
     });
 
-    // 日別集計（ここを割合表示対応）
+    // 日別集計（割合表示対応）
     const ratioMode = document.getElementById('ratioMode').checked;
     const dateMap = {};
     filtered.forEach(row => {
@@ -319,7 +334,6 @@ function loadStatics(isFilter) {
     Object.keys(dateMap).sort().reverse().forEach(date => {
       const rows = dateMap[date];
       const total = rows.reduce((a, b) => a + Number(b.count), 0);
-      // 最多国
       const tmpMap = {};
       rows.forEach(r => {
         const c = countryList[r.countryIdx];
@@ -329,16 +343,14 @@ function loadStatics(isFilter) {
       });
       const maxCountry = Object.entries(tmpMap).sort((a, b) => b[1] - a[1])[0];
       if (ratioMode) {
-        // 割合表示
         const percent = maxCountry && total > 0 ? ((maxCountry[1] / total) * 100).toFixed(1) : "-";
         dateTbody.innerHTML += `<tr><td>${date}</td><td>${maxCountry ? maxCountry[0] : '-'}</td><td>${percent !== "-" ? percent + "%" : "-"}</td></tr>`;
       } else {
-        // 人数表示
         dateTbody.innerHTML += `<tr><td>${date}</td><td>${total}</td><td>${maxCountry ? `${maxCountry[0]}（${maxCountry[1]}人）` : '-'}</td></tr>`;
       }
     });
 
-    // 最新20件
+    // 最近の記録（最新20件）
     const recentTbody = document.querySelector('#recent-table tbody');
     recentTbody.innerHTML = '';
     filtered.slice(-20).reverse().forEach(row => {
@@ -355,7 +367,7 @@ function loadStatics(isFilter) {
 
 // 国別入場数推移グラフ
 function showCountryTrend() {
-  db.ref('country').get().then(snapshot => {
+  db.ref('country').once('value').then(snapshot => {
     if (!snapshot.exists()) return;
     const allData = [];
     const obj = snapshot.val();
@@ -412,8 +424,128 @@ function showCountryTrend() {
   });
 }
 
+// 指定日のランキング表示
+function loadDailyRanking() {
+  const date = document.getElementById('ranking-date').value;
+  const tbody = document.querySelector('#daily-ranking-table tbody');
+  tbody.innerHTML = '';
+  if (!date) {
+    tbody.innerHTML = '<tr><td colspan="3">日付を選択してください</td></tr>';
+    return;
+  }
+  db.ref('country').orderByChild('date').equalTo(date).once('value').then(snapshot => {
+    if (!snapshot.exists()) {
+      tbody.innerHTML = '<tr><td colspan="3">データがありません</td></tr>';
+      return;
+    }
+    const agg = {};
+    snapshot.forEach(s => {
+      const v = s.val();
+      const idx = Number(v.countryIdx);
+      const cnt = Number(v.count || 0);
+      if (!Number.isFinite(idx)) return;
+      agg[idx] = (agg[idx] || 0) + cnt;
+    });
+    const ranking = Object.entries(agg)
+      .map(([idx, count]) => {
+        const c = countryList[Number(idx)];
+        const name = c ? `${c.flag} ${c.jp}` : '不明';
+        return { name, count: Number(count) };
+      })
+      .sort((a, b) => b.count - a.count);
+
+    let total = 0;
+    ranking.forEach((r, i) => {
+      total += r.count;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${i + 1}</td><td>${r.name}</td><td>${r.count}</td>`;
+      tbody.appendChild(tr);
+    });
+    const trTotal = document.createElement('tr');
+    trTotal.className = 'highlight';
+    trTotal.innerHTML = `<td colspan="2">合計（${ranking.length}カ国）</td><td>${total}</td>`;
+    tbody.appendChild(trTotal);
+  }).catch(err => {
+    console.error(err);
+    tbody.innerHTML = '<tr><td colspan="3">取得に失敗しました</td></tr>';
+  });
+}
+
+// 指定日のランキングをテキストでコピー
+function copyDailyRanking() {
+  const date = document.getElementById('ranking-date').value;
+  if (!date) {
+    alert('日付を選択してください');
+    return;
+  }
+  db.ref('country').orderByChild('date').equalTo(date).once('value').then(snapshot => {
+    if (!snapshot.exists()) {
+      alert('データがありません');
+      return;
+    }
+    const agg = {};
+    snapshot.forEach(s => {
+      const v = s.val();
+      const idx = Number(v.countryIdx);
+      const cnt = Number(v.count || 0);
+      if (!Number.isFinite(idx)) return;
+      agg[idx] = (agg[idx] || 0) + cnt;
+    });
+    const ranking = Object.entries(agg)
+      .map(([idx, count]) => {
+        const c = countryList[Number(idx)];
+        const name = c ? `${c.flag} ${c.jp}` : '不明';
+        return { name, count: Number(count) };
+      })
+      .sort((a, b) => b.count - a.count);
+
+    let total = 0;
+    let text = `【指定日の国別ランキング】${date}\n\n順位\t国\t人数\n------------------------\n`;
+    ranking.forEach((r, i) => {
+      total += r.count;
+      text += `${i + 1}位\t${r.name}\t${r.count}人\n`;
+    });
+    text += `------------------------\n合計: ${total}人（${ranking.length}カ国）\n`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => alert('コピーしました')).catch(() => fallbackCopy(text));
+    } else {
+      fallbackCopy(text);
+    }
+  }).catch(err => {
+    console.error(err);
+    alert('取得に失敗しました');
+  });
+}
+
+// フォールバックコピー
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); alert('コピーしました'); }
+  catch { alert('コピーに失敗しました'); }
+  document.body.removeChild(ta);
+}
+
 // 初期表示
+function initRankingDate() {
+  const pad = n => String(n).padStart(2, '0');
+  const d = new Date();
+  const today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const el = document.getElementById('ranking-date');
+  if (el) {
+    el.value = today;
+    loadDailyRanking();
+    el.addEventListener('change', loadDailyRanking);
+  }
+}
+
 loadStatics();
+initRankingDate();
   </script>
 </body>
 </html>
