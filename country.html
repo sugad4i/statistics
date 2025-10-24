@@ -416,7 +416,7 @@ function getNowTimeStr() {
 function loadHistory() {
   const date = document.getElementById('date-input').value;
   if (!date) return;
-  db.ref('country').orderByChild('date').equalTo(date).get().then(snapshot => {
+  db.ref('country').orderByChild('date').equalTo(date).once('value').then(snapshot => {
     historyList = [];
     historyKeys = [];
     if (snapshot.exists()) {
@@ -452,46 +452,95 @@ function renderHistory() {
 // 履歴削除
 function deleteHistory(key) {
   if (!key) return;
-  if (!confirm('この履歴を削除しますか？')) return;
+  if (!confirm('この履歴を削除しますか?')) return;
   db.ref('country/' + key).remove().then(() => {
     loadHistory();
   });
 }
 
-// 今日のデータ出力（クリップボード）
+// 今日のデータ出力（国別集計・ランキング形式）
 function exportTodayData() {
   const date = document.getElementById('date-input').value;
   if (!date) {
     alert('日付を入力してください');
     return;
   }
-  db.ref('country').orderByChild('date').equalTo(date).get().then(snapshot => {
+  
+  db.ref('country').orderByChild('date').equalTo(date).once('value').then(snapshot => {
     if (!snapshot.exists()) {
       alert('データがありません');
       return;
     }
-    let textContent = `【国別来場者データ】${date}\n\n時間\t国\t人数\n------------------------\n`;
+    
+    // 国別に集計
+    const countryStats = {};
     snapshot.forEach(child => {
       const row = child.val();
-      const c = countryList[row.countryIdx];
-      textContent += `${row.time || '--:--'}\t${c ? c.jp : '不明'}\t${row.count}人\n`;
+      const countryIdx = row.countryIdx;
+      const count = row.count || 0;
+      
+      if (!countryStats[countryIdx]) {
+        countryStats[countryIdx] = 0;
+      }
+      countryStats[countryIdx] += count;
     });
+    
+    // ランキング形式に変換してソート
+    const ranking = Object.entries(countryStats).map(([idx, count]) => {
+      const c = countryList[parseInt(idx)];
+      return {
+        country: c ? c.jp : '不明',
+        flag: c ? c.flag : '❓',
+        count: count
+      };
+    }).sort((a, b) => b.count - a.count);
+    
+    // テキスト形式で整形
+    let textContent = `【国別来場者データ】${date}\n\n`;
+    textContent += `順位\t国\t人数\n`;
+    textContent += `------------------------\n`;
+    
+    let total = 0;
+    ranking.forEach((item, index) => {
+      textContent += `${index + 1}位\t${item.flag} ${item.country}\t${item.count}人\n`;
+      total += item.count;
+    });
+    
+    textContent += `------------------------\n合計: ${total}人 (${ranking.length}カ国)\n`;
+    
+    // クリップボードにコピー
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(textContent).then(() => {
         alert('データをクリップボードにコピーしました');
       }).catch(err => {
-        alert('コピーに失敗しました: ' + err);
+        console.error('コピーエラー:', err);
+        fallbackCopy(textContent);
       });
     } else {
-      const textarea = document.createElement('textarea');
-      textarea.value = textContent;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      alert('データをクリップボードにコピーしました');
+      fallbackCopy(textContent);
     }
+  }).catch(error => {
+    console.error('データ取得エラー:', error);
+    alert('データの取得に失敗しました: ' + error.message);
   });
+}
+
+// フォールバック用コピー関数
+function fallbackCopy(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    alert('データをクリップボードにコピーしました');
+  } catch (err) {
+    console.error('コピー失敗:', err);
+    alert('コピーに失敗しました');
+  }
+  document.body.removeChild(textarea);
 }
 
 // 初期表示
